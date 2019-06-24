@@ -3,9 +3,39 @@ import pandas as pd
 import numpy as np 
 import sys
 import os
+import argparse
 
-resolution = 880000
-split_res = 8
+parser = argparse.ArgumentParser(description='File to clean juicer dump files into the correct format.')
+parser.add_argument('to_dir',
+                    help='the directory to save files into')
+parser.add_argument('root_dir', 
+                    help='file locations, include * for glob to work. e.g. ./*')
+parser.add_argument('res',type=int, default=880000,  
+                    help='resolution to be considered for each picture, current default is 880kb which is the median size of a TAD.')
+parser.add_argument('split_res', type=int, default=8, 
+                    help='number of overlaps per resolution sized window. Must be a divisor of resolution. current default is 8')
+
+args = parser.parse_args()
+
+try:
+    to_dir = args.to_dir
+except NameError:
+    print("to directory not specified")
+    exit()
+    
+try:
+    root_dir = args.root_dir
+except NameError:
+    print("root directory not specified")
+    exit()
+
+resolution = args.res
+split_res = args.split_res
+
+if resolution % split_res != 0:
+    print('split resolution is not a divisor of resolution.' )
+    exit()
+
 
 def split_files(to_dir, root_dir, resolution, split_res): 
     if not os.path.exists(to_dir):                  # caller handles errors
@@ -33,6 +63,10 @@ def split_files(to_dir, root_dir, resolution, split_res):
             f.write(str(int(row.x)) +'\t' + str(int(row.y)) +'\t' +str(row.vals) +'\n')
             f.close()
         index = index - split_res+1
-        metadata = metadata.append(pd.DataFrame(data={'index':[no],'start':[min(df.x)], 'file': [filename],'end': [index], 'first_index': [first_index]} ) )
+        metadata = metadata.append(pd.DataFrame(data={'index':[no],'start':[min(df.x)], 'file': [filename], 'end': [index], 'first_index': [first_index]} ) )
     metadata=metadata.set_index('index')
     return metadata
+
+metadata = split_files(to_dir, root_dir, resolution, split_res)
+
+metadata.to_csv(to_dir+'/metadata.csv')
