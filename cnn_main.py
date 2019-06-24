@@ -19,7 +19,7 @@ device='cpu'
 
 class HiCDataset(Dataset):
     """Hi-C dataset."""
-    def __init__(self, root_dir, metadata, data_res):
+    def __init__(self, root_dir, metadata, data_res, resolution, split_res):
         """
         Args:
             root_dir (string): Directory with all the images + * if it all images in dir.
@@ -30,6 +30,11 @@ class HiCDataset(Dataset):
         self.metadata = metadata
         self.metadata = self.mutate_metadata()
         self.data_res = data_res
+        self.resolution = resolution
+        self.split_res = split_res 
+        self.pixel_size = int(resolution/data_res)
+        self.sub_res = int(resolution/split_res)
+        
     def mutate_metadata(self):
         metadata=self.metadata
         metadata['classification']= 'CTCFKO'
@@ -42,10 +47,10 @@ class HiCDataset(Dataset):
         data_res=self.data_res
         metobj=self.metadata.loc[((self.metadata.first_index<=idx) & (self.metadata.end>idx))]
         suffix = str(metobj.index.tolist()[0])
-        minmet = int(idx-metobj.first_index)*110000+ int(metobj.start)
-        maxmet = minmet +880000
+        minmet = int(idx-metobj.first_index)*self.sub_res+ int(metobj.start)
+        maxmet = minmet +self.resolution
         image= pd.DataFrame()
-        for i in range(0,8): 
+        for i in range(0,self.split_res): 
             img_name = os.path.join(self.root_dir, suffix + '_'+str(idx+i))
             image = image.append(pd.read_csv(img_name, names=list(['x','y','vals']), sep='\t'))
         image = image[(image.y > minmet) & (image.y < maxmet)]
@@ -53,12 +58,12 @@ class HiCDataset(Dataset):
         #fix all of this so that the output size is always the same 
         image.x =  (image.x - minmet)/data_res
         image.y =  (image.y - minmet)/data_res
-        image_scp = csr_matrix( (image.vals, (image.x.map(int), image.y.map(int)) ), shape=(176,176) ).toarray()
+        image_scp = csr_matrix( (image.vals, (image.x.map(int), image.y.map(int)) ), shape=(self.pixel_size,self.pixel_size) ).toarray()
         sample = {'image': np.expand_dims(image_scp, axis=0), 'type': str(metobj.classification.tolist()[0]) }
         return sample
 
 metadata= pd.read_csv("test_code_metadata.csv")
-dataset=HiCDataset("test_code", metadata, data_res)
+dataset=HiCDataset("test_code", metadata, data_res, resolution, split_res)
 sampler= RandomSampler(dataset,replacement=False)
 
 dataloader = DataLoader(dataset,
