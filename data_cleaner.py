@@ -10,9 +10,9 @@ parser.add_argument('to_dir',
                     help='the directory to save files into')
 parser.add_argument('root_dir', 
                     help='file locations, include * for glob to work. e.g. ./*')
-parser.add_argument('res',type=int, default=880000,  
+parser.add_argument('--res',type=int, default=880000,  
                     help='resolution to be considered for each picture, current default is 880kb which is the median size of a TAD.')
-parser.add_argument('split_res', type=int, default=8, 
+parser.add_argument('--split_res', type=int, default=8, 
                     help='number of overlaps per resolution sized window. Must be a divisor of resolution. current default is 8')
 
 args = parser.parse_args()
