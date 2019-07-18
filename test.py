@@ -18,14 +18,6 @@ with torch.no_grad():
     for i, raw_imgs in enumerate(dataloader):
         imgs = Variable(raw_imgs['image'].type(torch.FloatTensor))
         str_labels = np.asarray(raw_imgs['type'])
-        labels = []
-        for label in str_labels:
-            if label == 'WT':
-                labels.append(0)
-            elif label == 'CTCFKO':
-                labels.append(1)
-            else: 
-                labels.append(2)
         labels = np.asarray(labels)
         labels = torch.from_numpy(labels)
         labels = labels.to(device)

@@ -37,9 +37,9 @@ class HiCDataset(Dataset):
         
     def mutate_metadata(self):
         metadata=self.metadata
-        metadata['classification']= 'CTCFKO'
-        metadata.loc[metadata.file.str.contains('DKO'), 'classification']='DKO'
-        metadata.loc[metadata.file.str.contains('WT'), 'classification']='WT'
+        metadata['classification']=1
+        metadata.loc[metadata.file.str.contains('DKO'), 'classification']=2
+        metadata.loc[metadata.file.str.contains('WT'), 'classification']=0
         return metadata
     def __len__(self):
         return self.metadata.end.iloc[-1] 
@@ -59,7 +59,7 @@ class HiCDataset(Dataset):
         image.x =  (image.x - minmet)/data_res
         image.y =  (image.y - minmet)/data_res
         image_scp = csr_matrix( (image.vals, (image.x.map(int), image.y.map(int)) ), shape=(self.pixel_size,self.pixel_size) ).toarray()
-        sample = {'image': np.expand_dims(image_scp, axis=0), 'type': str(metobj.classification.tolist()[0]) }
+        sample = {'image': np.expand_dims(image_scp, axis=0), 'type': int(metobj.classification.tolist()[0]) }
         return sample
 
 metadata= pd.read_csv("test_code_metadata.csv")
@@ -92,7 +92,7 @@ class ConvNet(nn.Module):
         self.fc2 = nn.Sequential(nn.Linear(in_features=30, out_features=num_classes), 
             nn.Softmax())
     def forward(self, x):
-        #out = self.layer1(x)
+        #x = self.layer1(x)
         #out = self.layer2(out)
         x = x.reshape(x.size(0), -1)
         x = self.fc1(x)
@@ -111,16 +111,7 @@ for epoch in range(29):
     running_loss=0.0
     for i, raw_imgs in enumerate(dataloader):
         imgs = Variable(raw_imgs['image'].type(torch.FloatTensor))
-        str_labels = np.asarray(raw_imgs['type'])
-        labels = []
-        for label in str_labels:
-            if label == 'WT':
-                labels.append(0)
-            elif label == 'CTCFKO':
-                labels.append(1)
-            else: 
-                labels.append(2)
-        labels = np.asarray(labels)
+        labels = np.asarray(raw_imgs['type'])
         labels = torch.from_numpy(labels)
         labels = labels.to(device)
         # zero gradients 
