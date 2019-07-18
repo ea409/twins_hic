@@ -62,12 +62,12 @@ class HiCDataset(Dataset):
         sample = {'image': np.expand_dims(image_scp, axis=0), 'type': str(metobj.classification.tolist()[0]) }
         return sample
 
-metadata= pd.read_csv("metadata.csv")
-dataset=HiCDataset("cleaned_data", metadata, data_res, resolution, split_res)
+metadata= pd.read_csv("test_code_metadata.csv")
+dataset=HiCDataset("test_code", metadata, data_res, resolution, split_res)
 sampler= RandomSampler(dataset,replacement=False)
 
 dataloader = DataLoader(dataset,
-                        batch_size=1,
+                        batch_size=54,
                         sampler = sampler)
 
 num_classes = 3
@@ -78,25 +78,26 @@ learning_rate = 0.01
 class ConvNet(nn.Module):
     def __init__(self,num_classes=64):
         super(ConvNet, self).__init__()
-        self.layer1 = nn.Sequential(
-            nn.Conv2d(in_channels=1,out_channels=16, kernel_size=5, stride=1, padding=2),
-            nn.BatchNorm2d(16),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2))
-        self.layer2 = nn.Sequential(
-            nn.Conv2d(in_channels=16, out_channels=32, kernel_size=5, stride=1, padding=2),
-            nn.BatchNorm2d(32),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2))
-        self.fc1 = nn.Sequential(nn.Linear(in_features=[1, 32*44*44], out_features=[1,30])) 
+        #self.layer1 = nn.Sequential(
+        #    nn.Conv2d(in_channels=1,out_channels=16, kernel_size=5, stride=1, padding=2),
+        #    nn.BatchNorm2d(16),
+        #    nn.ReLU(),
+        #    nn.MaxPool2d(kernel_size=2, stride=2))
+        #self.layer2 = nn.Sequential(
+        #    nn.Conv2d(in_channels=16, out_channels=32, kernel_size=5, stride=1, padding=2),
+        #    nn.BatchNorm2d(32),
+        #    nn.ReLU(),
+        #    nn.MaxPool2d(kernel_size=2, stride=2))
+        self.fc1 = nn.Sequential(nn.Linear(in_features=176*176, out_features=30)) 
         self.fc2 = nn.Sequential(nn.Linear(in_features=30, out_features=num_classes), 
             nn.Softmax())
     def forward(self, x):
-        out = self.layer1(x)
-        out = self.layer2(out)
-        out = self.fc1(out)
-        out = self.fc2(out)
-        return out
+        #out = self.layer1(x)
+        #out = self.layer2(out)
+        x = x.reshape(x.size(0), -1)
+        x = self.fc1(x)
+        x = self.fc2(x)
+        return x
 
 model = ConvNet(num_classes).to(device)
 
@@ -131,7 +132,7 @@ for epoch in range(29):
         loss.backward()
         optimizer.step()
         running_loss += loss.item()
-        if (i+1) % 20 == 0:
+        if (i+1) % 29 == 0:
             print ('Epoch [{}/{}], Loss: {:.4f}' 
              .format(epoch+1, i, running_loss/20 ))
             running_loss=0.0
