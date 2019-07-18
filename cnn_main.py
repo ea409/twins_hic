@@ -41,8 +41,10 @@ class HiCDataset(Dataset):
         metadata.loc[metadata.file.str.contains('DKO'), 'classification']=2
         metadata.loc[metadata.file.str.contains('WT'), 'classification']=0
         return metadata
+
     def __len__(self):
         return self.metadata.end.iloc[-1] 
+        
     def __getitem__(self, idx):
         data_res=self.data_res
         metobj=self.metadata.loc[((self.metadata.first_index<=idx) & (self.metadata.end>idx))]
@@ -55,7 +57,6 @@ class HiCDataset(Dataset):
             image = image.append(pd.read_csv(img_name, names=list(['x','y','vals']), sep='\t'))
         image = image[(image.y > minmet) & (image.y < maxmet)]
         image.vals=image.vals/np.sum(image.vals)
-        #fix all of this so that the output size is always the same 
         image.x =  (image.x - minmet)/data_res
         image.y =  (image.y - minmet)/data_res
         image_scp = csr_matrix( (image.vals, (image.x.map(int), image.y.map(int)) ), shape=(self.pixel_size,self.pixel_size) ).toarray()

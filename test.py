@@ -24,4 +24,4 @@ with torch.no_grad():
         outputs = model(imgs)
         _, predicted = torch.max(outputs.data, 1)
         correct += (predicted == labels).sum().item()
-    print('Test Accuracy of the model on the 10000 test images: {} %'.format(100 * correct / total))
+    print('Test Accuracy of the model test images: {} %'.format(100 * correct / total))
