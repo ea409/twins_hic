@@ -10,16 +10,16 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
 import torch.nn.functional as F
+from torchvision import transforms
 
-resolution = 880000
-split_res = 8
+resolution = 440000
+split_res = 4
 data_res = 5000
-device='cpu'
-
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class HiCDataset(Dataset):
     """Hi-C dataset."""
-    def __init__(self, root_dir, metadata, data_res, resolution, split_res):
+    def __init__(self, root_dir, metadata, data_res, resolution, split_res, transform):
         """
         Args:
             root_dir (string): Directory with all the images + * if it all images in dir.
@@ -34,17 +34,15 @@ class HiCDataset(Dataset):
         self.split_res = split_res 
         self.pixel_size = int(resolution/data_res)
         self.sub_res = int(resolution/split_res)
-        
+        self.transform = transform 
     def mutate_metadata(self):
         metadata=self.metadata
         metadata['classification']=1
         metadata.loc[metadata.file.str.contains('DKO'), 'classification']=2
         metadata.loc[metadata.file.str.contains('WT'), 'classification']=0
         return metadata
-
     def __len__(self):
-        return self.metadata.end.iloc[-1] 
-        
+        return self.metadata.end.iloc[-1]       
     def __getitem__(self, idx):
         data_res=self.data_res
         metobj=self.metadata.loc[((self.metadata.first_index<=idx) & (self.metadata.end>idx))]
@@ -56,79 +54,80 @@ class HiCDataset(Dataset):
             img_name = os.path.join(self.root_dir, suffix + '_'+str(idx+i))
             image = image.append(pd.read_csv(img_name, names=list(['x','y','vals']), sep='\t'))
         image = image[(image.y > minmet) & (image.y < maxmet)]
-        image.vals=image.vals/np.sum(image.vals)
+        image.vals=image.vals/np.sum(image.vals*2)
         image.x =  (image.x - minmet)/data_res
         image.y =  (image.y - minmet)/data_res
         image_scp = csr_matrix( (image.vals, (image.x.map(int), image.y.map(int)) ), shape=(self.pixel_size,self.pixel_size) ).toarray()
-        sample = {'image': np.expand_dims(image_scp, axis=0), 'type': int(metobj.classification.tolist()[0]) }
+        image_scp = np.log(image_scp+np.transpose(image_scp)+1)/np.max(np.log(image_scp+1))
+        img = np.expand_dims(image_scp, axis=0)
+        img =torch.Tensor(img)
+        transform=self.transform
+        sample = (transform(img), int(metobj.classification.tolist()[0]) )
         return sample
 
-metadata= pd.read_csv("test_code_metadata.csv")
-dataset=HiCDataset("test_code", metadata, data_res, resolution, split_res)
+transform = transforms.Compose([transforms.ToPILImage(),  transforms.ToTensor()])#,  transforms.Normalize([0.5], [0.5])])
+metadata= pd.read_csv("cleaned_data_metadata.csv")
+dataset=HiCDataset("cleaned_data", metadata, data_res, resolution, split_res, transform=transform)
 sampler= RandomSampler(dataset,replacement=False)
 
-dataloader = DataLoader(dataset,
-                        batch_size=54,
-                        sampler = sampler)
+
+batch_size=8
+
+dataloader = DataLoader(dataset, batch_size=batch_size, sampler = sampler)
 
 num_classes = 3
-batch_size=64
-learning_rate = 0.01
+learning_rate = 0.2
+no_of_batches= int(len(dataset)/batch_size)
 
 # Convolutional neural network (two convolutional layers)
-class ConvNet(nn.Module):
-    def __init__(self,num_classes=64):
-        super(ConvNet, self).__init__()
-        #self.layer1 = nn.Sequential(
-        #    nn.Conv2d(in_channels=1,out_channels=16, kernel_size=5, stride=1, padding=2),
-        #    nn.BatchNorm2d(16),
-        #    nn.ReLU(),
-        #    nn.MaxPool2d(kernel_size=2, stride=2))
-        #self.layer2 = nn.Sequential(
-        #    nn.Conv2d(in_channels=16, out_channels=32, kernel_size=5, stride=1, padding=2),
-        #    nn.BatchNorm2d(32),
-        #    nn.ReLU(),
-        #    nn.MaxPool2d(kernel_size=2, stride=2))
-        self.fc1 = nn.Sequential(nn.Linear(in_features=176*176, out_features=30)) 
-        self.fc2 = nn.Sequential(nn.Linear(in_features=30, out_features=num_classes), 
-            nn.Softmax())
+class Net(nn.Module):
+    def __init__(self, num_classes):
+        super(Net, self).__init__()
+        self.conv1 = nn.Conv2d(1, 20, 5)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(20, 16, 5)
+        self.fc1 = nn.Linear(88*88, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, num_classes)
+        #self.norm = nn.Softmin(dim=1)
     def forward(self, x):
-        #x = self.layer1(x)
-        #out = self.layer2(out)
-        x = x.reshape(x.size(0), -1)
-        x = self.fc1(x)
+        #x = self.pool(self.conv2(x))
+        #x = self.pool(self.conv1(x))
+        #x = x.view(-1, 4 * 82 * 82)
+        x = x.view(-1, 88 * 88)
+        x = F.relu(self.fc1(x))
         x = self.fc2(x)
+        x = self.fc3(x)
+        #x = self.norm(x)
         return x
 
-model = ConvNet(num_classes).to(device)
+#model = ConvNet(num_classes).to(device)
+model=Net(num_classes)
 
 # Loss and optimizer
 criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
+optimizer = optim.Adam(model.parameters())
 
 #  Training
-for epoch in range(29):
+for epoch in range(20):
     running_loss=0.0
-    for i, raw_imgs in enumerate(dataloader):
-        imgs = Variable(raw_imgs['image'].type(torch.FloatTensor))
-        labels = np.asarray(raw_imgs['type'])
-        labels = torch.from_numpy(labels)
-        labels = labels.to(device)
+    for i, data in enumerate(dataloader):
+        inputs, labels = data
+        #imgs, labels = data[0].to(device), data[1].to(device)
         # zero gradients 
         optimizer.zero_grad()
-        # forward pass 
-        outputs = model(imgs)
+        outputs = model(inputs)
         loss = criterion(outputs, labels)
-        # backward pass 
         loss.backward()
         optimizer.step()
         running_loss += loss.item()
-        if (i+1) % 29 == 0:
-            print ('Epoch [{}/{}], Loss: {:.4f}' 
-             .format(epoch+1, i, running_loss/20 ))
-            running_loss=0.0
-
+        if (i+1) % 2000==0:
+            _, predicted = torch.max(F.softmax(outputs).data, 1)
+            print(loss.item(), sum(predicted ==labels))
+        if (i+1) % no_of_batches == 0:
+            print ('Epoch [{}/{}], Loss: {:.4f}'
+            .format(epoch+1, i, running_loss/no_of_batches))
 
 # Save the model checkpoint
 torch.save(model.state_dict(), 'model.ckpt')
