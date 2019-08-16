@@ -1,112 +1,31 @@
-import glob as glob 
 import pandas as pd 
-import numpy as np 
-import torch 
 from torch.utils.data import Dataset, DataLoader, RandomSampler
-import sys
-import os
-from scipy.sparse import csr_matrix
-import torch.nn as nn
+from torchvision import transforms
 import torch.optim as optim
 from torch.autograd import Variable
 import torch.nn.functional as F
-from torchvision import transforms
+import torch.nn as nn
+import HiCclass
+import models
+import torch 
 
-resolution = 440000
-split_res = 4
-data_res = 5000
+resolution, split_res, data_res = 440000, 4, 5000
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+transform = transforms.Compose([transforms.ToPILImage(),  transforms.ToTensor()])
+metadata= pd.read_csv("data/cleaned_data_low_res_metadata.csv")
+dataset=HiCclass.HiCDataset("data/cleaned_data_low_res", metadata, data_res, resolution, split_res, transform=transform)
 
-class HiCDataset(Dataset):
-    """Hi-C dataset."""
-    def __init__(self, root_dir, metadata, data_res, resolution, split_res, transform):
-        """
-        Args:
-            root_dir (string): Directory with all the images + * if it all images in dir.
-            metadata (pd.DataFrame): Result of split_files. 
-                on a sample.
-        """
-        self.root_dir = root_dir
-        self.metadata = metadata
-        self.metadata = self.mutate_metadata()
-        self.data_res = data_res
-        self.resolution = resolution
-        self.split_res = split_res 
-        self.pixel_size = int(resolution/data_res)
-        self.sub_res = int(resolution/split_res)
-        self.transform = transform 
-    def mutate_metadata(self):
-        metadata=self.metadata
-        metadata['classification']=1
-        metadata.loc[metadata.file.str.contains('DKO'), 'classification']=2
-        metadata.loc[metadata.file.str.contains('WT'), 'classification']=0
-        return metadata
-    def __len__(self):
-        return self.metadata.end.iloc[-1]       
-    def __getitem__(self, idx):
-        data_res=self.data_res
-        metobj=self.metadata.loc[((self.metadata.first_index<=idx) & (self.metadata.end>idx))]
-        suffix = str(metobj.index.tolist()[0])
-        minmet = int(idx-metobj.first_index)*self.sub_res+ int(metobj.start)
-        maxmet = minmet +self.resolution
-        image= pd.DataFrame()
-        for i in range(0,self.split_res): 
-            img_name = os.path.join(self.root_dir, suffix + '_'+str(idx+i))
-            image = image.append(pd.read_csv(img_name, names=list(['x','y','vals']), sep='\t'))
-        image = image[(image.y > minmet) & (image.y < maxmet)]
-        image.vals=image.vals/np.sum(image.vals*2)
-        image.x =  (image.x - minmet)/data_res
-        image.y =  (image.y - minmet)/data_res
-        image_scp = csr_matrix( (image.vals, (image.x.map(int), image.y.map(int)) ), shape=(self.pixel_size,self.pixel_size) ).toarray()
-        image_scp = np.log(image_scp+np.transpose(image_scp)+1)/np.max(np.log(image_scp+1))
-        img = np.expand_dims(image_scp, axis=0)
-        img =torch.Tensor(img)
-        transform=self.transform
-        sample = (transform(img), int(metobj.classification.tolist()[0]) )
-        return sample
-
-transform = transforms.Compose([transforms.ToPILImage(),  transforms.ToTensor()])#,  transforms.Normalize([0.5], [0.5])])
-metadata= pd.read_csv("cleaned_data_metadata.csv")
-dataset=HiCDataset("cleaned_data", metadata, data_res, resolution, split_res, transform=transform)
 sampler= RandomSampler(dataset,replacement=False)
-
-
-batch_size=8
-
 dataloader = DataLoader(dataset, batch_size=batch_size, sampler = sampler)
 
-num_classes = 3
-learning_rate = 0.2
+batch_size, num_classes, learning_rate =17, 3, 0.2
 no_of_batches= int(len(dataset)/batch_size)
 
 # Convolutional neural network (two convolutional layers)
-class Net(nn.Module):
-    def __init__(self, num_classes):
-        super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(1, 20, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(20, 16, 5)
-        self.fc1 = nn.Linear(88*88, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, num_classes)
-        #self.norm = nn.Softmin(dim=1)
-    def forward(self, x):
-        #x = self.pool(self.conv2(x))
-        #x = self.pool(self.conv1(x))
-        #x = x.view(-1, 4 * 82 * 82)
-        x = x.view(-1, 88 * 88)
-        x = F.relu(self.fc1(x))
-        x = self.fc2(x)
-        x = self.fc3(x)
-        #x = self.norm(x)
-        return x
-
-#model = ConvNet(num_classes).to(device)
-model=Net(num_classes)
+model=models.ConvNet(num_classes)
 
 # Loss and optimizer
 criterion = nn.CrossEntropyLoss()
-
 optimizer = optim.Adam(model.parameters())
 
 #  Training
@@ -123,7 +42,7 @@ for epoch in range(20):
         optimizer.step()
         running_loss += loss.item()
         if (i+1) % 2000==0:
-            _, predicted = torch.max(F.softmax(outputs).data, 1)
+            _, predicted = torch.max(F.softmax(outputs, dim=1).data, 1)
             print(loss.item(), sum(predicted ==labels))
         if (i+1) % no_of_batches == 0:
             print ('Epoch [{}/{}], Loss: {:.4f}'
