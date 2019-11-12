@@ -39,6 +39,7 @@ class HiCDataset(Dataset):
     def __len__(self):
         return self.metadata.end.iloc[-1]       
     def __getitem__(self, idx):
+        idx=int(idx)
         data_res=self.data_res
         metobj=self.metadata.loc[((self.metadata.first_index<=idx) & (self.metadata.end>idx))]
         suffix = str(metobj.index.tolist()[0])
@@ -46,7 +47,7 @@ class HiCDataset(Dataset):
         maxmet = minmet +self.resolution
         image= pd.DataFrame()
         for i in range(0,self.split_res): 
-            img_name = os.path.join(self.root_dir, suffix + '_'+str(idx+i))
+            img_name = os.path.join(self.root_dir, suffix + '_'+str(int(idx+i)))
             image = image.append(pd.read_csv(img_name, names=list(['x','y','vals']), sep='\t'))
         image = image[(image.y > minmet) & (image.y < maxmet)]
         image.vals=image.vals/np.sum(image.vals*2)
@@ -59,3 +60,26 @@ class HiCDataset(Dataset):
         transform=self.transform
         sample = (transform(img), int(metobj.classification.tolist()[0]) )
         return sample
+
+def return_metadata_info(idx, metadata,resolution, split_res):
+    metobj=metadata.loc[((metadata.first_index<=idx) & (metadata.end>idx))]
+    sub_res = int(resolution/split_res)
+    location = int(idx-metobj.first_index)*sub_res+ int(metobj.start)
+    return metobj.file, location
+
+def get_meta_index(metadata, logicals, train=True):
+   concatrange=range(0,0)
+   start=0
+   for i, met in metadata.iterrows():
+      if train==True:
+         if any(x in met.file for x in logicals): 
+            concatrange=np.concatenate((concatrange,range(start, met.first_index)))
+            start=met.end
+         if i==len(metadata):
+            concatrange=np.concatenate((concatrange,range(start, metadata.end.iloc[-1])))
+      else: 
+         if any(x in met.file for x in logicals):
+            concatrange=np.concatenate((concatrange,range(met.first_index, met.end)))
+   return concatrange
+
+#Need to create HiC paired dataset - for siamese network. 

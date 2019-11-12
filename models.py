@@ -24,6 +24,30 @@ class Net(nn.Module):
         #x = self.norm(x)
         return x
 
+class dConvNet(nn.Module):
+    def __init__(self, num_classes):
+        super(dConvNet, self).__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(1, 20, 5,dilation=2), 
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(20, 16, 5,dilation=2), 
+            nn.MaxPool2d(2, 2),
+        )
+        self.classifier = nn.Sequential(
+            nn.Linear(16*19*19, 120),
+            nn.ReLU(True),
+            nn.Dropout(),
+            nn.Linear(120, 84),
+            nn.ReLU(True),
+            nn.Dropout(),
+            nn.Linear(84, num_classes),
+            )
+    def forward(self, x):
+        x = self.features(x)
+        x = x.view(-1, 16*19*19)
+        x = self.classifier(x)
+        return x
+
 class ConvNet(nn.Module):
     def __init__(self, num_classes):
         super(ConvNet, self).__init__()
@@ -47,3 +71,6 @@ class ConvNet(nn.Module):
         x = x.view(-1, 16*19*19)
         x = self.classifier(x)
         return x
+#try GAN - or mutual information type situation
+#learn f(x) such that x is the wt and f(x) is the CTCFKO - then i have to clean and label in a different way.
+#or x is the CTCFKO and f(x) is the DKO
