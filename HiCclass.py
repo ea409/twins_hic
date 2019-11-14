@@ -61,12 +61,6 @@ class HiCDataset(Dataset):
         sample = (transform(img), int(metobj.classification.tolist()[0]) )
         return sample
 
-def return_metadata_info(idx, metadata,resolution, split_res):
-    metobj=metadata.loc[((metadata.first_index<=idx) & (metadata.end>idx))]
-    sub_res = int(resolution/split_res)
-    location = int(idx-metobj.first_index)*sub_res+ int(metobj.start)
-    return metobj.file, location
-
 def get_meta_index(metadata, logicals, train=True):
    concatrange=range(0,0)
    start=0
@@ -81,5 +75,3 @@ def get_meta_index(metadata, logicals, train=True):
          if any(x in met.file for x in logicals):
             concatrange=np.concatenate((concatrange,range(met.first_index, met.end)))
    return concatrange
-
-#Need to create HiC paired dataset - for siamese network. 

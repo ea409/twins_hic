@@ -10,25 +10,18 @@ import torch
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import ImageGrid
 
-resolution = 440000
-split_res = 4
-data_res = 5000
-transform = transforms.Compose([transforms.ToPILImage(),  transforms.ToTensor()])
-
-resolution, split_res, data_res = 440000, 4, 5000
+#Hi-C params
+resolution, split_res, data_res = 880000, 8, 10000 #440000, 4, 5000
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 transform = transforms.Compose([transforms.ToPILImage(),  transforms.ToTensor()])
-
-#metadata_highres= pd.read_csv("fast_data_access/cleaned_data_metadata.csv")
-#dataset_highres=HiCclass.HiCDataset("fast_data_access/cleaned_data", metadata_highres, data_res, resolution, split_res, transform=transform)
-#test_sampler =  torch.utils.data.SubsetRandomSampler(indices_highres_test)
 
 metadata= pd.read_csv("10kb_allreps/metadata.csv")
 dataset=HiCclass.HiCDataset("10kb_allreps", metadata, data_res, resolution, split_res, transform=transform)
 
-indices_test = HiCclass.get_meta_index(metadata, ['R1R2'], train=False)
+indices_test = HiCclass.get_meta_index(metadata, ['chr2'], train=False)
 test_sampler =  torch.utils.data.SubsetRandomSampler(indices_test)
 
+#CNN params
 batch_size, num_classes, learning_rate =17, 3, 0.2
 
 dataloader = DataLoader(dataset, batch_size=min(len(indices_test),1500), sampler = test_sampler) #change to split test and train and add on thee other dataset. 
