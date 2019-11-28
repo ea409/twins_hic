@@ -2,7 +2,7 @@ import glob as glob
 import pandas as pd 
 import numpy as np 
 import torch 
-from torch.utils.data import Dataset, DataLoader, RandomSampler
+from torch.utils.data import Dataset, DataLoader, Sampler
 import sys
 import os
 from scipy.sparse import csr_matrix
@@ -18,8 +18,12 @@ class HiCDataset(Dataset):
         """
         Args:
             root_dir (string): Directory with all the images + * if it all images in dir.
-            metadata (pd.DataFrame): Result of split_files. 
-                on a sample.
+            metadata (pd.DataFrame): Result of split_files on a sample.
+            data_res (int): resolution of thee data normally 5000kb or 10000kb, this is the resolution on which
+                juicer dump was called.
+            resolution (int): resolution on which to run CNN - final size of image in kb. 
+            split_res (int): how its split into indices from split_files. 
+            transform (torchvision.transforms): transform tot do on the data from torchvision.transforms. 
         """
         self.root_dir = root_dir
         self.metadata = metadata
@@ -30,14 +34,17 @@ class HiCDataset(Dataset):
         self.pixel_size = int(resolution/data_res)
         self.sub_res = int(resolution/split_res)
         self.transform = transform 
+
     def mutate_metadata(self):
         metadata=self.metadata
         metadata['classification']=1
         metadata.loc[metadata.file.str.contains('DKO'), 'classification']=2
         metadata.loc[metadata.file.str.contains('WT'), 'classification']=0
         return metadata
+
     def __len__(self):
-        return self.metadata.end.iloc[-1]       
+        return self.metadata.end.iloc[-1]  
+
     def __getitem__(self, idx):
         idx=int(idx)
         data_res=self.data_res
@@ -60,18 +67,12 @@ class HiCDataset(Dataset):
         transform=self.transform
         sample = (transform(img), int(metobj.classification.tolist()[0]) )
         return sample
-
-def get_meta_index(metadata, logicals, train=True):
-   concatrange=range(0,0)
-   start=0
-   for i, met in metadata.iterrows():
-      if train==True:
-         if any(x in met.file for x in logicals): 
-            concatrange=np.concatenate((concatrange,range(start, met.first_index)))
-            start=met.end
-         if i==len(metadata):
-            concatrange=np.concatenate((concatrange,range(start, metadata.end.iloc[-1])))
-      else: 
-         if any(x in met.file for x in logicals):
+    
+def get_meta_index(HiCDataset, logicals_on, logicals_off):
+    concatrange=range(0,0)
+    for i, met in HiCDataset.metadata.iterrows():
+        if(~any(x in met.file for x in logicals_off) & any(x in met.file for x in logicals_on)) :
             concatrange=np.concatenate((concatrange,range(met.first_index, met.end)))
-   return concatrange
+    return concatrange
+
+

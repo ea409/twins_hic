@@ -6,6 +6,7 @@ import torch.optim as optim
 from torch.autograd import Variable
 import torch.nn.functional as F
 import torch.nn as nn
+#import Additional_Samplers
 import HiCclass
 import models
 import torch 
@@ -19,8 +20,10 @@ transform = transforms.Compose([transforms.ToPILImage(),  transforms.ToTensor()]
 metadata= pd.read_csv("10kb_allreps/metadata.csv")
 dataset=HiCclass.HiCDataset("10kb_allreps", metadata, data_res, resolution, split_res, transform=transform)
 
-indices_train = HiCclass.get_meta_index(metadata, ['TR3','TR4','chr2'], train=True)
-train_sampler = torch.utils.data.SubsetRandomSampler(indices_train)
+indices_train = HiCclass.get_meta_index(dataset, [''],['TR3','TR4','chr2'])
+train_sampler = torch.utils.data.SubsetRandomSampler(indices_train) 
+#OR: Additional_Samplers.WeightedSubsetSampler() with either sequencing depth or 
+# R4/R3 included but WT singletons less likely in train. 
 
 #CNN params.
 batch_size, num_classes, learning_rate =17, 3, 0.2
@@ -38,7 +41,7 @@ optimizer = optim.Adam(model.parameters())
 for epoch in range(20):
     running_loss=0.0
     if (epoch % 5):
-        torch.save(model.state_dict(), 'model_10kb.ckpt')
+        torch.save(model.state_dict(), 'model_10kb_trained_all.ckpt')
     for i, data in enumerate(dataloader):
         inputs, labels = data
         #imgs, labels = data[0].to(device), data[1].to(device)
@@ -57,5 +60,5 @@ for epoch in range(20):
             .format(epoch+1, i, running_loss/no_of_batches))
 
 # Save the model checkpoint
-torch.save(model.state_dict(), 'model_10kb.ckpt')
+torch.save(model.state_dict(), 'model_10kb_trained_all.ckpt')
 
