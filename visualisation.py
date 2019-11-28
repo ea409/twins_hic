@@ -4,7 +4,7 @@ import copy
 
 class Visualisation(object):
     """Base class for all Visualisations.
-    Every Sampler subclass has to provide a generate gradients method. 
+    Every Visualisation subclass has to provide a generate gradients method. 
     """
     def __init__(self, model):
         self.model = copy.deepcopy(model)
