@@ -1,9 +1,4 @@
-import guided_backprop
-import vanilla_backprop
-from torchvisualisations.misc_functions import (get_example_params,
-                            convert_to_grayscale,
-                            save_gradient_images,
-                            get_positive_negative_saliency)
+from torch_plus import visualisation, additional_samplers
 import numpy.ma as ma
 import numpy as np
 from skimage.filters import threshold_local
@@ -12,6 +7,10 @@ from mpl_toolkits.axes_grid1 import ImageGrid
 import matplotlib.cm as cm 
 import collections 
 
+def get_positive_negative_saliency(gradient):
+    pos_saliency = (np.maximum(0, gradient) / gradient.max())
+    neg_saliency = (np.maximum(0, -gradient) / -gradient.min())
+    return pos_saliency, neg_saliency
 
 def normalise_log_picture(picture,counts):
     for i in range(counts):
@@ -68,7 +67,6 @@ def quickplot(dataset,index, tc, method,cm1=my_cm,cm2 ='viridis'):
 
 def pos_saliency(dataset,index, tc, method):
     pred_img = dataset[index][0].unsqueeze(1)
-    pred_img.requires_grad = True
     pic=method.generate_gradients(pred_img, tc)
     pos,_ =get_positive_negative_saliency(pic)
     pos = (pos[0]+np.transpose(pos[0]))/2
@@ -88,7 +86,7 @@ def make_CTCF_map(dataset,metind, GBP):
             CTCF_predictions[(11*i+length):(11*i+88)]+=curr
     return CTCF_predictions/counts
 
-def quickplot_all_reps(dataset,chrom,inds,model, method,cm1=my_cm,cm2 ='viridis'):
+def quickplot_all_reps(dataset,chrom,inds,method,cm1=my_cm,cm2 ='viridis'):
     mets = dataset.metadata[dataset.metadata.file.str.contains(chrom)&dataset.metadata.file.str.contains('R1R2')].copy()
     mets = mets.sort_values(by='classification')
     fig = plt.figure()
@@ -107,41 +105,41 @@ def quickplot_all_reps(dataset,chrom,inds,model, method,cm1=my_cm,cm2 ='viridis'
         grid[1+3*i].imshow(threshold_local(file_plot,5),cm2)
         grid[2+3*i].imshow(threshold_local(file_plot,5),cm2)
         grid[2+3*i].imshow(pos_plot,cmap=cm1)
-        outputs=F.softmax(model(dataset[index][0].unsqueeze(1)), dim=1).detach().numpy()[0]
+        outputs=F.softmax(method.model(dataset[index][0].unsqueeze(1)), dim=1).detach().numpy()[0]
         txt = txt +'class ' +str(i)+": "+ '{0:.2f}, {1:.2f}, {2:.2f}      '.format(*outputs)
     fig.text(0.0,0.0,txt)
     return pos
 
 #CTCF=make_CTCF_map(dataset,124,GBP)
-Rad21 = ChIP_Rad21[(ChIP_Rad21.chrom=='chr1') & (ChIP_Rad21.strength>25)].copy() 
-Rad21.start= round((Rad21.start-3000000)/10000)
-Rad21.start=Rad21.start.astype(int)
-vec=np.array(Rad21.start)
-vec=np.unique(vec)
+# Rad21 = ChIP_Rad21[(ChIP_Rad21.chrom=='chr1') & (ChIP_Rad21.strength>25)].copy() 
+# Rad21.start= round((Rad21.start-3000000)/10000)
+# Rad21.start=Rad21.start.astype(int)
+# vec=np.array(Rad21.start)
+# vec=np.unique(vec)
 
-CTCFsubset.start= round((CTCFsubset.start-3000000)/10000)
-CTCFsubset.start=CTCFsubset.start.astype(int)
-vec=np.array(CTCFsubset.start)
-vec=np.unique(vec)
-vec=np.concatenate((vec, vec+1, vec+2, vec+3, vec+4))
+# CTCFsubset.start= round((CTCFsubset.start-3000000)/10000)
+# CTCFsubset.start=CTCFsubset.start.astype(int)
+# vec=np.array(CTCFsubset.start)
+# vec=np.unique(vec)
+# vec=np.concatenate((vec, vec+1, vec+2, vec+3, vec+4))
+
+# VBP=visualisation.Vanilla(model)
+# GBP=visualisation.Guided(model)
+# quickplot(inputs, 2756, 0, GBP, cm1=my_cm)
 
 
-GBP= guided_backprop.GuidedBackprop(model)
-quickplot(inputs, 2756, 0, GBP, cm1=my_cm)
-
-
-for j in range(0,100):
-    pos, fig =quickplot(dataset[ 296+ 58787+j][0].unsqueeze(1), 0, 0, GBP, cm1=my_cm)
-    plt.close()
-    if j==0:
-        curr=np.diagonal(pos, offset=6)
-    else:
-        curr = np.concatenate((curr, np.zeros(11-2) )) +np.concatenate((np.zeros(len(curr)-88+11-2), np.diagonal(pos)))
+# for j in range(0,100):
+#     pos, fig =quickplot(dataset[ 296+ 58787+j][0].unsqueeze(1), 0, 0, GBP, cm1=my_cm)
+#     plt.close()
+#     if j==0:
+#         curr=np.diagonal(pos, offset=6)
+#     else:
+#         curr = np.concatenate((curr, np.zeros(11-2) )) +np.concatenate((np.zeros(len(curr)-88+11-2), np.diagonal(pos)))
 
 
          
-for j in range(0,1617):
-    fig =quickplot_all_reps(dataset,'chr2',j,model, GBP)
-    fig.savefig('figs/all_three/' + str(j)+'.png', dpi=fig.dpi, bbox_inches = 'tight')
-    plt.close()
+# for j in range(0,1617):
+#     fig =quickplot_all_reps(dataset,'chr2',j,model, GBP)
+#     fig.savefig('figs/all_three/' + str(j)+'.png', dpi=fig.dpi, bbox_inches = 'tight')
+#     plt.close()
 

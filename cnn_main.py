@@ -6,7 +6,7 @@ import torch.optim as optim
 from torch.autograd import Variable
 import torch.nn.functional as F
 import torch.nn as nn
-#import additional_samplers
+#from torch_plus import additional_samplers
 import HiCclass
 import models
 import torch 

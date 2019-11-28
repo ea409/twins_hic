@@ -15,7 +15,7 @@ class Visualisation(object):
             self.gradients = grad_in[0]
         first_layer = list(self.model.features._modules.items())[0][1]
         first_layer.register_backward_hook(hook_function) 
-         
+
     def generate_gradients(self, input_image, target_class):
         raise NotImplementedError
 
@@ -91,3 +91,25 @@ class Guided(Visualisation):
         # [0] to get rid of the first channel (1,3,224,224)
         gradients_as_arr = self.gradients.data.numpy()[0]
         return gradients_as_arr
+
+class GuidedLayerSpecific(Guided):
+    def generate_gradients(self, input_image, target_class, cnn_layer, filter_pos):
+        self.model.zero_grad()
+        # Forward pass
+        x = input_image
+        for index, layer in enumerate(self.model.features):
+            # Forward pass layer by layer
+            # x is not used after this point because it is only needed to trigger
+            # the forward hook function
+            x = layer(x)
+            # Only need to forward until the selected layer is reached
+            if index == cnn_layer:
+                # (forward hook function triggered)
+                break
+        conv_output = torch.sum(torch.abs(x[0, filter_pos]))
+        # Backward pass
+        conv_output.backward()
+        gradients_as_arr = self.gradients.data.numpy()[0]
+        return gradients_as_arr   
+
+

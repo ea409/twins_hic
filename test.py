@@ -7,8 +7,9 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 import HiCclass
 import models
-#import vis #ualisations when vis is done. 
-import additional_samplers
+#import torch_plus
+# .visualisations when vis is done. 
+from torch_plus import visualisation, additional_samplers
 
 #Hi-C params
 resolution, split_res, data_res = 880000, 8, 10000 #Old params: 440000, 4, 5000
@@ -27,7 +28,7 @@ batch_size, num_classes =17, 3
 dataloader = DataLoader(dataset, batch_size=len(indices_test), sampler = test_sampler)  
 
 model = models.ConvNet(num_classes)
-model.load_state_dict(torch.load('model_10kb.ckpt'))
+model.load_state_dict(torch.load('../../model_10kb.ckpt'))
 
 # Test the model
 # eval mode (batchnorm uses moving mean/variance instead of mini-batch mean/variance)
