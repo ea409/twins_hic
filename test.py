@@ -8,18 +8,18 @@ import torch.nn.functional as F
 import HiCclass
 import models
 #import vis #ualisations when vis is done. 
-import Additional_Samplers
+import additional_samplers
 
 #Hi-C params
 resolution, split_res, data_res = 880000, 8, 10000 #Old params: 440000, 4, 5000
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 transform = transforms.Compose([transforms.ToPILImage(),  transforms.ToTensor()])
 
-metadata= pd.read_csv("../../10kb_allreps/metadata.csv")
-dataset=HiCclass.HiCDataset("../../10kb_allreps", metadata, data_res, resolution, split_res, transform=transform)
+metadata= pd.read_csv("10kb_allreps/metadata.csv")
+dataset=HiCclass.HiCDataset("10kb_allreps", metadata, data_res, resolution, split_res, transform=transform)
 
 indices_test = HiCclass.get_meta_index(dataset, ['chr2'],['R3','R4'])
-test_sampler = Additional_Samplers.SequentialSubsetSampler(indices_test)
+test_sampler = additional_samplers.SequentialSubsetSampler(indices_test)
 
 #CNN params
 batch_size, num_classes =17, 3

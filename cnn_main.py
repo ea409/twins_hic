@@ -6,7 +6,7 @@ import torch.optim as optim
 from torch.autograd import Variable
 import torch.nn.functional as F
 import torch.nn as nn
-#import Additional_Samplers
+#import additional_samplers
 import HiCclass
 import models
 import torch 
@@ -22,7 +22,7 @@ dataset=HiCclass.HiCDataset("10kb_allreps", metadata, data_res, resolution, spli
 
 indices_train = HiCclass.get_meta_index(dataset, [''],['TR3','TR4','chr2'])
 train_sampler = torch.utils.data.SubsetRandomSampler(indices_train) 
-#OR: Additional_Samplers.WeightedSubsetSampler() with either sequencing depth or 
+#OR: additional_samplers.WeightedSubsetSampler() with either sequencing depth or 
 # R4/R3 included but WT singletons less likely in train. 
 
 #CNN params.
