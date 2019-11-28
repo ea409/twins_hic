@@ -19,7 +19,7 @@ class SequentialSubsetSampler(Sampler):
         return len(self.indices)
 
 class WeightedSubsetSampler(Sampler):
-    r"""Samples elements randomly given a weighting, from a defined subset.
+    """Samples elements randomly given a weighting, from a defined subset.
     Arguments:
         weights (sequence): a sequence of weights, not necessary summing up to one
         indices (sequence): a sequence of indices
