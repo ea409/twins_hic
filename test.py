@@ -27,7 +27,7 @@ batch_size, num_classes =17, 3
 dataloader = DataLoader(dataset, batch_size=len(indices_test), sampler = test_sampler)  
 
 model = models.ConvNet(num_classes)
-model.load_state_dict(torch.load('../../model_10kb.ckpt'))
+model.load_state_dict(torch.load('model_10kb.ckpt'))
 
 # Test the model
 # eval mode (batchnorm uses moving mean/variance instead of mini-batch mean/variance)
