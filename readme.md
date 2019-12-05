@@ -9,9 +9,9 @@ The trained CNN is 78% accurate on the test chromosome (chr2), this data has bee
 from torch_plus import visualisation
 
 GBP = visualisation.Guided(model) #visualisation.Vanilla(model) 
-quickplot_all_reps(dataset,'chr2', distance/resolution, GBP)
+quickplot_all_reps(dataset,'chr2', index, GBP)
 ```
-
+Where index is the position in chromosome - start position of the hic file in kb divided by 110000.
 
 The aim of this work is to provide biological insights on differences between phenotypes  
 
