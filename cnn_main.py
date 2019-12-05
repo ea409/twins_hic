@@ -7,7 +7,7 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 import torch.nn as nn
 #from torch_plus import additional_samplers
-import HiCclass
+import HiC_class
 import models
 import torch 
 
@@ -18,9 +18,9 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 transform = transforms.Compose([transforms.ToPILImage(),  transforms.ToTensor()])
 
 metadata= pd.read_csv("10kb_allreps/metadata.csv")
-dataset=HiCclass.HiCDataset("10kb_allreps", metadata, data_res, resolution, split_res, transform=transform)
+dataset=HiCclass.HiC_Dataset("10kb_allreps", metadata, data_res, resolution, split_res, transform=transform)
 
-indices_train = HiCclass.get_meta_index(dataset, [''],['TR3','TR4','chr2'])
+indices_train = HiC_class.get_meta_index(dataset, [''],['TR3','TR4','chr2'])
 train_sampler = torch.utils.data.SubsetRandomSampler(indices_train) 
 #OR: additional_samplers.WeightedSubsetSampler() with either sequencing depth or 
 # R4/R3 included but WT singletons less likely in train. 

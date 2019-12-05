@@ -108,7 +108,7 @@ def quickplot_all_reps(dataset,chrom,inds,method,cm1=my_cm,cm2 ='viridis'):
         outputs=F.softmax(method.model(dataset[index][0].unsqueeze(1)), dim=1).detach().numpy()[0]
         txt = txt +'class ' +str(i)+": "+ '{0:.2f}, {1:.2f}, {2:.2f}      '.format(*outputs)
     fig.text(0.0,0.0,txt)
-    return pos
+    return fig
 
 #CTCF=make_CTCF_map(dataset,124,GBP)
 # Rad21 = ChIP_Rad21[(ChIP_Rad21.chrom=='chr1') & (ChIP_Rad21.strength>25)].copy() 
@@ -139,7 +139,7 @@ def quickplot_all_reps(dataset,chrom,inds,method,cm1=my_cm,cm2 ='viridis'):
 
          
 # for j in range(0,1617):
-#     fig =quickplot_all_reps(dataset,'chr2',j,model, GBP)
+#     fig=quickplot_all_reps(dataset,'chr2',j, GBP)
 #     fig.savefig('figs/all_three/' + str(j)+'.png', dpi=fig.dpi, bbox_inches = 'tight')
 #     plt.close()
 
