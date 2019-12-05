@@ -22,12 +22,11 @@ This behaviour is replicable across many regions
 
 | header | header |
 | ------ | ------ |
-| cell | cell |
+| ![](output_example/Picture_2.png)  | cell |
 | cell | cell | 
 
 
 
 
-|------|------|------|
-| ![](output_example/Picture_2.png) | ![](output_example/Picture_3.png) | ![](output_example/Picture_4.png) |
-|------|------|------|
+| ![](output_example/Picture_3.png) | ![](output_example/Picture_4.png) |
+
