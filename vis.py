@@ -110,36 +110,4 @@ def quickplot_all_reps(dataset,chrom,inds,method,cm1=my_cm,cm2 ='viridis'):
     fig.text(0.0,0.0,txt)
     return fig
 
-#CTCF=make_CTCF_map(dataset,124,GBP)
-# Rad21 = ChIP_Rad21[(ChIP_Rad21.chrom=='chr1') & (ChIP_Rad21.strength>25)].copy() 
-# Rad21.start= round((Rad21.start-3000000)/10000)
-# Rad21.start=Rad21.start.astype(int)
-# vec=np.array(Rad21.start)
-# vec=np.unique(vec)
-
-# CTCFsubset.start= round((CTCFsubset.start-3000000)/10000)
-# CTCFsubset.start=CTCFsubset.start.astype(int)
-# vec=np.array(CTCFsubset.start)
-# vec=np.unique(vec)
-# vec=np.concatenate((vec, vec+1, vec+2, vec+3, vec+4))
-
-# VBP=visualisation.Vanilla(model)
-# GBP=visualisation.Guided(model)
-# quickplot(inputs, 2756, 0, GBP, cm1=my_cm)
-
-
-# for j in range(0,100):
-#     pos, fig =quickplot(dataset[ 296+ 58787+j][0].unsqueeze(1), 0, 0, GBP, cm1=my_cm)
-#     plt.close()
-#     if j==0:
-#         curr=np.diagonal(pos, offset=6)
-#     else:
-#         curr = np.concatenate((curr, np.zeros(11-2) )) +np.concatenate((np.zeros(len(curr)-88+11-2), np.diagonal(pos)))
-
-
-         
-# for j in range(0,1617):
-#     fig=quickplot_all_reps(dataset,'chr2',j, GBP)
-#     fig.savefig('figs/all_three/' + str(j)+'.png', dpi=fig.dpi, bbox_inches = 'tight')
-#     plt.close()
 
