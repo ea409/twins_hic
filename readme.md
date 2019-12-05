@@ -5,7 +5,7 @@ The data is cleanded using split_files which is designed in order to minimize me
 
 The trained CNN is 78% accurate on the test chromosome (chr2), this data has been used in order to produce saliency maps by calling 
 
-`from torch_plus import visualisation
+`   from torch_plus import visualisation
 
 GBP = visualisation.Guided(model) #visualisation.Vanilla(model) 
 quickplot_all_reps(dataset,'chr2',j, GBP) `
