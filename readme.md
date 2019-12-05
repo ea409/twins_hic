@@ -21,7 +21,10 @@ the saliency map overlayed onto the Hi-C map. Top to bottom the images are wild 
 This behaviour is replicable across many regions
 
 
-
-| ------ | ------ | ------ |
+| header | header | cell | 
+| ------ | ------ | cell | 
+| cell | cell | cell | 
+| cell | cell |  cell | 
+|------|------|------|
 | ![](output_example/Picture_2.png) | ![](output_example/Picture_3.png) | ![](output_example/Picture_4.png) |
-| ------ | ------ | ------ |
+|------|------|------|
