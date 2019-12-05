@@ -16,7 +16,7 @@ The aim of this work is to provide biological insights on differences between ph
 The outcome is very clear distances identified by the classifier as being of interest. Left to right the images displayed show the saliency map, the HiC map and 
 the saliency map overlayed onto the Hi-C map. Top to bottom the images are wild type, CTCF knockout and CTCF, Rad21 Knockout.
 
-![](https://gitlab.doc.ic.ac.uk/ealjibur/CNN/blob/master/output_example/Picture_1)
+![](https://gitlab.doc.ic.ac.uk/ealjibur/CNN/output_example/Picture_1.png)
 
 This behaviour is replicable across many regions
 
