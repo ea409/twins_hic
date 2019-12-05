@@ -12,6 +12,6 @@ quickplot_all_reps(dataset,'chr2',j, GBP) `
 
 The aim of this work is to provide biological insights on differences between phenotypes  
 
-##Results 
+## Results 
 The outcome is very clear distances identified by the classifier as being of interest. 
 
