@@ -13,7 +13,7 @@ def get_positive_negative_saliency(gradient):
     return pos_saliency, neg_saliency
 
 def normalise_log_picture(picture,counts):
-    for i in range(counts):
+    for _ in range(counts):
         picture=np.log(picture+1)
         picture=picture/np.max(np.abs(picture))
     return picture
