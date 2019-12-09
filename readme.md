@@ -7,6 +7,7 @@ The trained CNN is 78% accurate on the test chromosome (chr2), this data has bee
 
 ```
 from torch_plus import visualisation
+from plot_visualisations import quickplot_all_reps
 
 GBP = visualisation.Guided(model) #visualisation.Vanilla(model) 
 quickplot_all_reps(dataset,'chr2', index, GBP)
