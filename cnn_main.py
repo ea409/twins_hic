@@ -1,4 +1,3 @@
-import pandas as pd 
 import numpy as np
 from torch.utils.data import Dataset, DataLoader, RandomSampler
 from torchvision import transforms
@@ -7,27 +6,25 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 import torch.nn as nn
 #from torch_plus import additional_samplers
-import HiC_class
+from HiCDataset import HiCType, HiCDataset, load
 import models
 import torch 
 
 
 #Hi-C params.
-resolution, split_res, data_res = 880000, 8, 10000
+#resolution, split_res, data_res = 880000, 8, 10000
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 transform = transforms.Compose([transforms.ToPILImage(),  transforms.ToTensor()])
 
-metadata= pd.read_csv("10kb_allreps/metadata.csv")
-dataset=HiCclass.HiC_Dataset("10kb_allreps", metadata, data_res, resolution, split_res, transform=transform)
+dataset=load("HiCDataset_10kb_allreps")
 
-indices_train = HiC_class.get_meta_index(dataset, [''],['TR3','TR4','chr2'])
-train_sampler = torch.utils.data.SubsetRandomSampler(indices_train) 
-#OR: additional_samplers.WeightedSubsetSampler() with either sequencing depth or 
+train_sampler = torch.utils.data.RandomSampler(dataset) 
+#additional_samplers.WeightedSubsetSampler() with either sequencing depth or 
 # R4/R3 included but WT singletons less likely in train. 
 
 #CNN params.
 batch_size, num_classes, learning_rate =17, 3, 0.2
-no_of_batches= int(len(indices_train)/batch_size)
+no_of_batches= np.floor(len(dataset)/batch_size)
 dataloader = DataLoader(dataset, batch_size=batch_size, sampler = train_sampler)
 
 # Convolutional neural network (two convolutional layers)
@@ -41,7 +38,7 @@ optimizer = optim.Adam(model.parameters())
 for epoch in range(20):
     running_loss=0.0
     if (epoch % 5):
-        torch.save(model.state_dict(), 'model_10kb_trained_all.ckpt')
+        torch.save(model.state_dict(), 'model_10kb_testingspeed.ckpt')
     for i, data in enumerate(dataloader):
         inputs, labels = data
         #imgs, labels = data[0].to(device), data[1].to(device)
@@ -60,5 +57,5 @@ for epoch in range(20):
             .format(epoch+1, i, running_loss/no_of_batches))
 
 # Save the model checkpoint
-torch.save(model.state_dict(), 'model_10kb_trained_all.ckpt')
+torch.save(model.state_dict(), 'model_10kb_testingspeed.ckpt')
 

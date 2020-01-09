@@ -127,7 +127,8 @@ if __name__ == "__main__":
     data.save("HiCDataset_10kb_allreps")
     del data2
     #make test
-    data = HiCDataset("10kb_allreps",  data_res, resolution, split_res, transform, logicals=(['chr2'], ['WTR3','WTR4']), stride=2)
+    data = HiCDataset("10kb_allreps",  data_res, resolution, split_res, transform, lo
+    gicals=(['chr2'], ['WTR3','WTR4']), stride=2)
     data.save("HiCDataset_10kb_allreps_test")
 
 
