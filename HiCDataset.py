@@ -13,7 +13,7 @@ from torchvision import transforms
 import pickle 
 
 class HiCType:
-    def __init__(self,indx, metadata, root_dir,  data_res, resolution,  split_res, pixel_size, sub_res, transform):
+    def __init__(self,indx, metadata, root_dir,  data_res, resolution,  split_res, pixel_size, sub_res, transform, depth=None):
         idx=int(indx)
         metobj=metadata.loc[((metadata.first_index<=idx) & (metadata.end>idx))]
         suffix = str(metobj.index.tolist()[0])
@@ -32,12 +32,15 @@ class HiCType:
         img = np.expand_dims(image_scp, axis=0)
         img =Tensor(img)
         self.data  = (transform(img), int(metobj.classification.tolist()[0]) )
-        self.depth = 1
+        if depth is None:
+            self.depth = 1
+        else:
+            self.depth = np.minimum(1.8*np.log(1+ np.log(1+depth.depth[idx]/100000000)**0.5)+0.1,1)
 
 
 class HiCDataset(Dataset):
     """Hi-C dataset."""
-    def __init__(self, root_dir,data_res, resolution, split_res, transform, stride=2, metadatapath=None, specify_ind=None, logicals=None):
+    def __init__(self, root_dir,data_res, resolution, split_res, transform, stride=2, metadatapath=None, specify_ind=None, logicals=None, depthpath=None):
         """
         Args:
             root_dir (string): Directory with all the images + * if it all images in dir.
@@ -53,20 +56,21 @@ class HiCDataset(Dataset):
                           int(resolution/data_res), #pixel size 
                           int(resolution/split_res), #sub res 
                           transform) #transform 
-        self.get_data(stride,specify_ind, logicals)
-        self.fix_first_end_index()
+        self.stride = stride
+        self.get_data(depthpath, specify_ind, logicals)
+        self.fix_first_end_index(self.stride)
     def __len__(self):
         return len(self.data)
     def __getitem__(self, idx):
-        return self.data[idx].data
-    def fix_first_end_index(self):
+        return self.data[idx].data, self.data[idx].depth
+    def fix_first_end_index(self, stride):
         self.file_metadata  =  self.file_metadata.reset_index(drop=True)
         total=0
         for ind, met in self.file_metadata.iterrows():
             self.file_metadata.at[ind,'first_index'] =total
-            total+= met.end - met.first_index
+            total+= int((met.end - met.first_index)/stride)
             self.file_metadata.at[ind,'end']= total
-    def create_file_metadata(self,root_dir, metadatapath):
+    def create_file_metadata(self, root_dir, metadatapath):
         if metadatapath is None: 
             metadata = pd.read_csv(root_dir+"/metadata.csv")
         else:
@@ -75,33 +79,50 @@ class HiCDataset(Dataset):
         metadata.loc[metadata.file.str.contains('DKO'), 'classification']=2
         metadata.loc[metadata.file.str.contains('WT'), 'classification']=0
         self.file_metadata = metadata
-    def get_data(self, stride, specify_ind, logicals):
+    def get_data(self, depthpath, specify_ind, logicals):
         if specify_ind is None: 
             if logicals is None: 
                 length = self.file_metadata.end.iloc[-1] 
                 specify_ind = range(0, length, stride)
             else: 
-                specify_ind = self.get_meta_index(stride, *logicals)
+                specify_ind = self.get_meta_index( *logicals)
         HiCs = [] 
+        if depthpath is None:
+            depth=None
+        else: 
+            depth=pd.read_csv(depthpath, delimiter=' ')
         for i in specify_ind:
-            HiCs.append(HiCType(i, self.file_metadata, *self.metadata))
+            HiCs.append(HiCType(i, self.file_metadata, *self.metadata, depth))
         self.data=tuple(HiCs)
     def add_data(self, hicdataset):
         if (self.metadata) == (hicdataset.metadata):
             self.data = self.data + hicdataset.data
             self.file_metadata=self.file_metadata.append(hicdataset.file_metadata)
-            self.fix_first_end_index()
+            self.fix_first_end_index(1)
         else:
             print('datasets not compatible')        
     def save(self,filename):
         with open(filename, 'wb') as output: 
             output.write(pickle.dumps(self))
             output.close()
-    def get_meta_index(self,stride, logicals_on, logicals_off):
+    def filter_by_Rad21(self, rad21_file_path, threshold=500):
+        Rad21 = pd.read_csv(rad21_file_path, delimiter=' ')
+        Rad21 = Rad21[Rad21.cnt > threshold].copy()
+        indices = tuple()
+        for chromosome in Rad21.chr.unique():
+            chr_subset = Rad21[(Rad21.chr==chromosome)].copy()
+            for i, met in self.file_metadata[self.file_metadata.file.str.contains(chromosome +'_')].iterrows():
+                if i==0:
+                    chr_subset.pos=(chr_subset.pos-met.start)/self.metadata[5]
+                    chr_subset = chr_subset[chr_subset.pos % self.stride ==0]
+                    chr_subset.pos = chr_subset.pos/self.stride 
+                indices+=tuple(chr_subset.pos.astype('int')+met.first_index)
+        return indices
+    def get_meta_index(self,logicals_on, logicals_off):
         specify_ind=range(0,0)
         for index, met in self.file_metadata.iterrows():
             if(~any(x in met.file for x in logicals_off) & any(x in met.file for x in logicals_on)):
-                specify_ind=np.concatenate((specify_ind,range(met.first_index, met.end, stride)))
+                specify_ind=np.concatenate((specify_ind,range(met.first_index, met.end, self.stride)))
             else:
                 self.file_metadata.drop(index, inplace=True)
         return specify_ind
@@ -120,15 +141,11 @@ if __name__ == "__main__":
     transform = transforms.Compose([transforms.ToPILImage(),  transforms.ToTensor()])
     #make train 
     data=HiCDataset("10kb_allreps",  data_res, resolution, split_res, transform, logicals=(['R1'], ['TR3','TR4','chr2','R2'] ), stride=2)
-    data2=HiCDataset("10kb_allreps",  data_res, resolution, split_res, transform, logicals=(['R2'], ['TR3','TR4','chr2','R1'] ), stride=2)
-    data.add_data(data2)
-    data2=HiCDataset("10kb_allreps",  data_res, resolution, split_res, transform, logicals=(['R1R2'], ['TR3','TR4','chr2'] ), stride=2)
-    data.add_data(data2)
-    data.save("HiCDataset_10kb_allreps")
-    del data2
+    data.save("HiCDataset_10kb_R1")
+    data=HiCDataset("10kb_allreps",  data_res, resolution, split_res, transform, logicals=(['R2'], ['TR3','TR4','chr2','R1'] ), stride=2)
+    data.save("HiCDataset_10kb_R2")
+    data=HiCDataset("10kb_allreps",  data_res, resolution, split_res, transform, logicals=(['R1R2'], ['TR3','TR4','chr2'] ), stride=2)
+    data.save("HiCDataset_10kb_R1R2")
     #make test
-    data = HiCDataset("10kb_allreps",  data_res, resolution, split_res, transform, lo
-    gicals=(['chr2'], ['WTR3','WTR4']), stride=2)
+    data = HiCDataset("10kb_allreps",  data_res, resolution, split_res, transform, logicals=(['chr2'], ['WTR3','WTR4']), stride=2)
     data.save("HiCDataset_10kb_allreps_test")
-
-

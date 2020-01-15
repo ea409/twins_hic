@@ -19,6 +19,9 @@ transform = transforms.Compose([transforms.ToPILImage(),  transforms.ToTensor()]
 dataset=load("HiCDataset_10kb_allreps")
 
 train_sampler = torch.utils.data.RandomSampler(dataset) 
+#To exclude without Rad21 binding 
+#train_sampler = torch.utils.data.SubsetRandomSampler(data.filter_by_Rad21("Cumulative_Rad21.txt", threshold=500)) 
+
 #additional_samplers.WeightedSubsetSampler() with either sequencing depth or 
 # R4/R3 included but WT singletons less likely in train. 
 
@@ -35,13 +38,13 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters())
 
 #  Training
-for epoch in range(20):
+for epoch in range(2):
     running_loss=0.0
     if (epoch % 5):
         torch.save(model.state_dict(), 'model_10kb_testingspeed.ckpt')
     for i, data in enumerate(dataloader):
-        inputs, labels = data
-        #imgs, labels = data[0].to(device), data[1].to(device)
+        data, depths = data
+        inputs, labels =  data
         # zero gradients 
         optimizer.zero_grad()
         outputs = model(inputs)
