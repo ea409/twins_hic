@@ -6,7 +6,7 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 import torch.nn as nn
 #from torch_plus import additional_samplers
-from HiCDataset import HiCType, HiCDataset, load
+from HiCDataset import HiCType, HiCDataset
 import models
 import torch 
 
@@ -15,10 +15,10 @@ import torch
 #resolution, split_res, data_res = 880000, 8, 10000
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-dataset = load("HiCDataset_10kb_R1")
-data = load("HiCDataset_10kb_R2")
+dataset = HiCDataset.load("HiCDataset_10kb_R1")
+data = HiCDataset.load("HiCDataset_10kb_R2")
 dataset.add_data(data)
-data = load("HiCDataset_10kb_R1R2")
+data = HiCDataset.load("HiCDataset_10kb_R1R2")
 dataset.add_data(data)
 del data
 

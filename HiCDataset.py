@@ -59,10 +59,13 @@ class HiCDataset(Dataset):
         self.stride = stride
         self.get_data(depthpath, specify_ind, logicals)
         self.fix_first_end_index(self.stride)
+        
     def __len__(self):
         return len(self.data)
+
     def __getitem__(self, idx):
         return self.data[idx].data, self.data[idx].depth
+
     def fix_first_end_index(self, stride):
         self.file_metadata  =  self.file_metadata.reset_index(drop=True)
         total=0
@@ -70,6 +73,7 @@ class HiCDataset(Dataset):
             self.file_metadata.at[ind,'first_index'] =total
             total+= int((met.end - met.first_index -1)/stride)+1
             self.file_metadata.at[ind,'end']= total
+
     def create_file_metadata(self, root_dir, metadatapath):
         if metadatapath is None: 
             metadata = pd.read_csv(root_dir+"/metadata.csv")
@@ -79,6 +83,7 @@ class HiCDataset(Dataset):
         metadata.loc[metadata.file.str.contains('DKO'), 'classification']=2
         metadata.loc[metadata.file.str.contains('WT'), 'classification']=0
         self.file_metadata = metadata
+
     def get_data(self, depthpath, specify_ind, logicals):
         if specify_ind is None: 
             if logicals is None: 
@@ -94,6 +99,7 @@ class HiCDataset(Dataset):
         for i in specify_ind:
             HiCs.append(HiCType(i, self.file_metadata, *self.metadata, depth))
         self.data=tuple(HiCs)
+
     def add_data(self, hicdataset):
         if (self.metadata[0:-1] == hicdataset.metadata[0:-1]):
             self.data = self.data + hicdataset.data
@@ -105,6 +111,7 @@ class HiCDataset(Dataset):
         with open(filename, 'wb') as output: 
             output.write(pickle.dumps(self))
             output.close()
+
     def filter_by_Rad21(self, rad21_file_path, threshold=500):
         Rad21 = pd.read_csv(rad21_file_path, delimiter=' ')
         Rad21 = Rad21[Rad21.cnt > threshold].copy()
@@ -118,6 +125,7 @@ class HiCDataset(Dataset):
                     chr_subset.pos = chr_subset.pos/self.stride 
                 indices+=tuple(chr_subset.pos.astype('int')+met.first_index)
         return indices
+
     def get_meta_index(self,logicals_on, logicals_off):
         specify_ind=range(0,0)
         for index, met in self.file_metadata.iterrows():
@@ -127,12 +135,12 @@ class HiCDataset(Dataset):
                 self.file_metadata.drop(index, inplace=True)
         return specify_ind
 
-
-def load(filename):
-    with open(filename, 'rb') as file:  # Overwrites any existing file.
-        unpickled = pickle.Unpickler(file)
-        loadobj = unpickled.load()
-    return loadobj
+    @staticmethod
+    def load(filename):
+        with open(filename, 'rb') as file:  # Overwrites any existing file.
+            unpickled = pickle.Unpickler(file)
+            loadobj = unpickled.load()
+        return loadobj
 
 
 if __name__ == "__main__":

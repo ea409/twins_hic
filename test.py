@@ -5,14 +5,14 @@ from torch.utils.data import Dataset, DataLoader, SequentialSampler
 from torchvision import transforms
 from torch.autograd import Variable
 import torch.nn.functional as F
-from HiCDataset import HiCDataset, HiCType, load
+from HiCDataset import HiCDataset, HiCType
 import models
 from matplotlib import pyplot as plt
 #import torch_plus
 # .visualisations when vis is done. 
 from torch_plus import visualisation, additional_samplers
 
-dataset=load("HiCDataset_10kb_allreps_test")
+dataset=HiCDataset.load("HiCDataset_10kb_allreps_test")
 test_sampler = SequentialSampler(dataset)
 
 #CNN params
