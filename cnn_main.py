@@ -14,9 +14,13 @@ import torch
 #Hi-C params.
 #resolution, split_res, data_res = 880000, 8, 10000
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-transform = transforms.Compose([transforms.ToPILImage(),  transforms.ToTensor()])
 
-dataset=load("HiCDataset_10kb_allreps")
+dataset = load("HiCDataset_10kb_R1")
+data = load("HiCDataset_10kb_R2")
+dataset.add_data(data)
+data = load("HiCDataset_10kb_R1R2")
+dataset.add_data(data)
+del data
 
 train_sampler = torch.utils.data.RandomSampler(dataset) 
 #To exclude without Rad21 binding 
@@ -34,11 +38,11 @@ dataloader = DataLoader(dataset, batch_size=batch_size, sampler = train_sampler)
 model=models.ConvNet(num_classes)
 
 # Loss and optimizer
-criterion = nn.CrossEntropyLoss()
+criterion = nn.CrossEntropyLoss(reduction='none')
 optimizer = optim.Adam(model.parameters())
 
 #  Training
-for epoch in range(2):
+for epoch in range(30):
     running_loss=0.0
     if (epoch % 5):
         torch.save(model.state_dict(), 'model_10kb_testingspeed.ckpt')
@@ -48,7 +52,9 @@ for epoch in range(2):
         # zero gradients 
         optimizer.zero_grad()
         outputs = model(inputs)
-        loss = criterion(outputs, labels)
+        depths = depths.type(torch.FloatTensor)
+        #loss = criterion(outputs, labels)
+        loss = torch.mean(torch.mul(depths,criterion(outputs, labels)))
         loss.backward()
         optimizer.step()
         running_loss += loss.item()

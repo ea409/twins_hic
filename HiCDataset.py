@@ -35,7 +35,7 @@ class HiCType:
         if depth is None:
             self.depth = 1
         else:
-            self.depth = np.minimum(1.8*np.log(1+ np.log(1+depth.depth[idx]/100000000)**0.5)+0.1,1)
+            self.depth = np.single(np.minimum(1.8*np.log(1+ np.log(1+depth.depth[idx]/100000000)**0.5)+0.1,1))
 
 
 class HiCDataset(Dataset):
@@ -68,7 +68,7 @@ class HiCDataset(Dataset):
         total=0
         for ind, met in self.file_metadata.iterrows():
             self.file_metadata.at[ind,'first_index'] =total
-            total+= int((met.end - met.first_index)/stride)
+            total+= int((met.end - met.first_index -1)/stride)+1
             self.file_metadata.at[ind,'end']= total
     def create_file_metadata(self, root_dir, metadatapath):
         if metadatapath is None: 
@@ -83,7 +83,7 @@ class HiCDataset(Dataset):
         if specify_ind is None: 
             if logicals is None: 
                 length = self.file_metadata.end.iloc[-1] 
-                specify_ind = range(0, length, stride)
+                specify_ind = range(0, length, self.stride)
             else: 
                 specify_ind = self.get_meta_index( *logicals)
         HiCs = [] 
@@ -95,7 +95,7 @@ class HiCDataset(Dataset):
             HiCs.append(HiCType(i, self.file_metadata, *self.metadata, depth))
         self.data=tuple(HiCs)
     def add_data(self, hicdataset):
-        if (self.metadata) == (hicdataset.metadata):
+        if (self.metadata[0:-1] == hicdataset.metadata[0:-1]):
             self.data = self.data + hicdataset.data
             self.file_metadata=self.file_metadata.append(hicdataset.file_metadata)
             self.fix_first_end_index(1)
@@ -140,12 +140,12 @@ if __name__ == "__main__":
     resolution, split_res, data_res = 880000, 8, 10000 #Old params: 440000, 4, 5000
     transform = transforms.Compose([transforms.ToPILImage(),  transforms.ToTensor()])
     #make train 
-    data=HiCDataset("10kb_allreps",  data_res, resolution, split_res, transform, logicals=(['R1'], ['TR3','TR4','chr2','R2'] ), stride=2)
+    data=HiCDataset("10kb_allreps",  data_res, resolution, split_res, transform, logicals=(['R1'], ['TR3','TR4','chr2','R2'] ), stride=2, depthpath="sequencing_depth.csv")
     data.save("HiCDataset_10kb_R1")
-    data=HiCDataset("10kb_allreps",  data_res, resolution, split_res, transform, logicals=(['R2'], ['TR3','TR4','chr2','R1'] ), stride=2)
+    data=HiCDataset("10kb_allreps",  data_res, resolution, split_res, transform, logicals=(['R2'], ['TR3','TR4','chr2','R1'] ), stride=2, depthpath="sequencing_depth.csv")
     data.save("HiCDataset_10kb_R2")
-    data=HiCDataset("10kb_allreps",  data_res, resolution, split_res, transform, logicals=(['R1R2'], ['TR3','TR4','chr2'] ), stride=2)
+    data=HiCDataset("10kb_allreps",  data_res, resolution, split_res, transform, logicals=(['R1R2'], ['TR3','TR4','chr2'] ), stride=2, depthpath="sequencing_depth.csv")
     data.save("HiCDataset_10kb_R1R2")
     #make test
-    data = HiCDataset("10kb_allreps",  data_res, resolution, split_res, transform, logicals=(['chr2'], ['WTR3','WTR4']), stride=2)
+    data = HiCDataset("10kb_allreps",  data_res, resolution, split_res, transform, logicals=(['chr2'], ['WTR3','WTR4']), stride=2, depthpath="sequencing_depth.csv")
     data.save("HiCDataset_10kb_allreps_test")
