@@ -35,7 +35,7 @@ no_of_batches= np.floor(len(dataset)/batch_size)
 dataloader = DataLoader(dataset, batch_size=batch_size, sampler = train_sampler)
 
 # Convolutional neural network (two convolutional layers)
-model=models.ConvNet(num_classes)
+model=models.DeepConvNet(num_classes)
 
 # Loss and optimizer
 criterion = nn.CrossEntropyLoss(reduction='none')
@@ -45,7 +45,7 @@ optimizer = optim.Adam(model.parameters())
 for epoch in range(30):
     running_loss=0.0
     if (epoch % 5):
-        torch.save(model.state_dict(), 'model_10kb_testingspeed.ckpt')
+        torch.save(model.state_dict(), 'model_10kb_deep_cnn_with_depth_adjustment.ckpt')
     for i, data in enumerate(dataloader):
         data, depths = data
         inputs, labels =  data
@@ -53,8 +53,8 @@ for epoch in range(30):
         optimizer.zero_grad()
         outputs = model(inputs)
         depths = depths.type(torch.FloatTensor)
-        #loss = criterion(outputs, labels)
-        loss = torch.mean(torch.mul(depths,criterion(outputs, labels)))
+        #loss = torch.mean(criterion(outputs, labels)) #normal cross entropy loss 
+        loss = torch.mean(torch.mul(depths,criterion(outputs, labels))) #depth adjusted loss 
         loss.backward()
         optimizer.step()
         running_loss += loss.item()
@@ -66,5 +66,5 @@ for epoch in range(30):
             .format(epoch+1, i, running_loss/no_of_batches))
 
 # Save the model checkpoint
-torch.save(model.state_dict(), 'model_10kb_testingspeed.ckpt')
+torch.save(model.state_dict(), 'model_10kb_deep_cnn_with_depth_adjustment.ckpt')
 

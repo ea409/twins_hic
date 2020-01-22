@@ -15,13 +15,18 @@ from torch_plus import visualisation, additional_samplers
 dataset=HiCDataset.load("HiCDataset_10kb_allreps_test")
 test_sampler = SequentialSampler(dataset)
 
+## for testing on only rad21 bound data from torch_plus import additional_samplers 
+#indices_test=np.array(dataset.filter_by_Rad21("Cumulative_Rad21.txt", threshold=500))
+#test_sampler = additional_samplers.SequentialSubsetSampler(indices_test)
+
+
 #CNN params
 batch_size, num_classes =100, 3
 
 dataloader = DataLoader(dataset, batch_size=batch_size, sampler = test_sampler)  
 
 model = models.ConvNet(num_classes)
-model.load_state_dict(torch.load('model_10kb_testingspeed.ckpt'))
+model.load_state_dict(torch.load('models_final/cnn_trained_with_depth_loss.ckpt'))
 
 # Test the model
 # eval mode (batchnorm uses moving mean/variance instead of mini-batch mean/variance)
@@ -45,3 +50,9 @@ for j in range(0,808):
     fig=vis.quickplot_all_reps(dataset,'chr2',j, GBP)
     fig.savefig('images/' + str(j)+'.png', dpi=fig.dpi, bbox_inches = 'tight')
     plt.close()
+
+# attributes_loss_adjusted=(depths, labels, predicted)
+
+plt.figure()
+plt.bar(x=hist1[1][:-1],height=hist3[0]/hist1[0], width=0.02)
+plt.show()

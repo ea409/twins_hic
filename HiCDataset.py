@@ -59,7 +59,7 @@ class HiCDataset(Dataset):
         self.stride = stride
         self.get_data(depthpath, specify_ind, logicals)
         self.fix_first_end_index(self.stride)
-        
+
     def __len__(self):
         return len(self.data)
 
@@ -82,6 +82,7 @@ class HiCDataset(Dataset):
         metadata['classification']=1
         metadata.loc[metadata.file.str.contains('DKO'), 'classification']=2
         metadata.loc[metadata.file.str.contains('WT'), 'classification']=0
+        metadata['chromosome']=metadata.file.str.split('/').apply(lambda x: x[-1]).str.split('_').apply(lambda x: x[1])
         self.file_metadata = metadata
 
     def get_data(self, depthpath, specify_ind, logicals):
@@ -137,7 +138,7 @@ class HiCDataset(Dataset):
 
     @staticmethod
     def load(filename):
-        with open(filename, 'rb') as file:  # Overwrites any existing file.
+        with open(filename, 'rb') as file: 
             unpickled = pickle.Unpickler(file)
             loadobj = unpickled.load()
         return loadobj
