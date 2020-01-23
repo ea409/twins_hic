@@ -144,6 +144,29 @@ class HiCDataset(Dataset):
         return loadobj
 
 
+
+class SiameseHiCDataset(Dataset):
+    def __init__(self, HiCDataset):
+        self.data = None 
+        self.metadata, self.data = self.make_data(HiCDataset)
+    def make_data(self, HiCDataset):
+        #to do make HiC Siamese Dataset. 
+        #order goes CTCF, DKO, WT then grouped, R1, R2
+        data=[]
+        for chrom in HiCDataset.file_metadata.chromosome.unique():
+            subset = HiCDataset.file_metadata[HiCDataset.file_metadata.chromosome==chrom].copy()
+            a=np.array(subset.sort_values(by='file').first_index)
+            indices = [(a[i],a[j]) for i in range(0,6) for j in np.array(range(0,6))[:i]]
+            for ind in range(0, np.min(subset.end-subset.first_index)):
+                for i, j in indices:
+                     data.append((HiCDataset[i+ind], HiCDataset[j+ind]))
+        return len(indices),tuple(data)
+    def __len__(self):
+        return len(self.data)
+    def __getitem__(self, idx):
+        #data1, depth1, data2, depth2, class1==class2
+        return self.data[idx][0][0][0], self.data[idx][0][1], self.data[idx][1][0][0], self.data[idx][1][1], self.data[idx][0][0][1]==self.data[idx][1][0][1]
+
 if __name__ == "__main__":
     #Hi-C params
     resolution, split_res, data_res = 880000, 8, 10000 #Old params: 440000, 4, 5000

@@ -25,8 +25,8 @@ batch_size, num_classes =100, 3
 
 dataloader = DataLoader(dataset, batch_size=batch_size, sampler = test_sampler)  
 
-model = models.ConvNet(num_classes)
-model.load_state_dict(torch.load('models_final/cnn_trained_with_depth_loss.ckpt'))
+model = models.DeepConvNet(num_classes)
+model.load_state_dict(torch.load('models_final/model_10kb_deep_cnn_no_depth_adjustment.ckpt'))
 
 # Test the model
 # eval mode (batchnorm uses moving mean/variance instead of mini-batch mean/variance)
@@ -45,14 +45,8 @@ for i, data in enumerate(dataloader):
 print('Test Accuracy of the model test images: {} %'.format(100 * correct / total))
 
 #vis.prediction_plot(-1, 0, inputs, labels, predicted, quality)
-GBP = visualisation.Guided(model) 
-for j in range(0,808):
-    fig=vis.quickplot_all_reps(dataset,'chr2',j, GBP)
-    fig.savefig('images/' + str(j)+'.png', dpi=fig.dpi, bbox_inches = 'tight')
-    plt.close()
-
-# attributes_loss_adjusted=(depths, labels, predicted)
-
-plt.figure()
-plt.bar(x=hist1[1][:-1],height=hist3[0]/hist1[0], width=0.02)
-plt.show()
+# GBP = visualisation.Guided(model) 
+# for j in range(0,808):
+#     fig=vis.quickplot_all_reps(dataset,'chr2',j, GBP)
+#     fig.savefig('images/' + str(j)+'.png', dpi=fig.dpi, bbox_inches = 'tight')
+#     plt.close()
