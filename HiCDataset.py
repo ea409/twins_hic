@@ -165,7 +165,11 @@ class SiameseHiCDataset(Dataset):
         return len(self.data)
     def __getitem__(self, idx):
         #data1, depth1, data2, depth2, class1==class2
-        return self.data[idx][0][0][0], self.data[idx][0][1], self.data[idx][1][0][0], self.data[idx][1][1], self.data[idx][0][0][1]==self.data[idx][1][0][1]
+        if self.data[idx][0][0][1]==self.data[idx][1][0][1]:
+            sim = 1
+        else: 
+            sim = -1
+        return self.data[idx][0][0][0], self.data[idx][0][1], self.data[idx][1][0][0], self.data[idx][1][1], sim 
 
 if __name__ == "__main__":
     #Hi-C params
