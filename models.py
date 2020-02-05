@@ -111,24 +111,24 @@ class SiameseNet(nn.Module):
             nn.Conv2d(20, 16, 5), 
             nn.MaxPool2d(2, 2),
         )
-        self.liner = nn.Sequential(
+        self.linear = nn.Sequential(
             nn.Linear(16*19*19, 120),
             nn.ReLU(True),
-            nn.Dropout(),
-            nn.Linear(120, 84),
+            #nn.Dropout(),
+            nn.Linear(120, 20),
             nn.ReLU(True),
-            nn.Dropout(),
+            #nn.Dropout(),
             )
-        self.out = nn.Linear(84, 1)
+        self.distance = nn.CosineSimilarity()
     def forward_one(self, x):
         x = self.features(x)
         x = x.view(x.size()[0], -1)
-        x = self.liner(x)
+        x = self.linear(x)
         return x
     def forward(self, x1, x2):
         out1 = self.forward_one(x1)
         out2 = self.forward_one(x2)
-        #  return self.sigmoid(out)
+        #out = self.distance(out1, out2)
         return out1, out2
 
 class SiameseNetAttentiveLayer(nn.Module):
@@ -147,7 +147,7 @@ class SiameseNetAttentiveLayer(nn.Module):
             nn.Conv2d(128, 256, 4),
             nn.ReLU(),   # 256@6*6
         )
-        self.liner = nn.Sequential(nn.Linear(9216, 4096), nn.Sigmoid())
+        self.linear = nn.Sequential(nn.Linear(9216, 4096), nn.Sigmoid())
         self.out = nn.Linear(4096, 1)
 
     def forward_one(self, x):
@@ -162,4 +162,4 @@ class SiameseNetAttentiveLayer(nn.Module):
         dis = torch.abs(out1 - out2)
         out = self.out(dis)
         #  return self.sigmoid(out)
-        return ou
+        return out

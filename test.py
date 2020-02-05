@@ -13,6 +13,7 @@ from matplotlib import pyplot as plt
 from torch_plus import visualisation, additional_samplers
 
 dataset=HiCDataset.load("HiCDataset_10kb_allreps_test")
+
 test_sampler = SequentialSampler(dataset)
 
 ## for testing on only rad21 bound data from torch_plus import additional_samplers 
@@ -21,12 +22,12 @@ test_sampler = SequentialSampler(dataset)
 
 
 #CNN params
-batch_size, num_classes =100, 3
+batch_size, num_classes =len(dataset), 3
 
 dataloader = DataLoader(dataset, batch_size=batch_size, sampler = test_sampler)  
 
-model = models.DeepConvNet(num_classes)
-model.load_state_dict(torch.load('models_final/model_10kb_deep_cnn_no_depth_adjustment.ckpt'))
+model = models.ConvNet(num_classes)
+model.load_state_dict(torch.load('models_final/model_10kb_cnn_no_depth_adjustment.ckpt'))
 
 # Test the model
 # eval mode (batchnorm uses moving mean/variance instead of mini-batch mean/variance)

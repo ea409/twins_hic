@@ -9,6 +9,7 @@ import torch.nn as nn
 from HiCDataset import HiCType, HiCDataset, SiameseHiCDataset
 import models
 import torch 
+from torch_plus.loss import ContrastiveLoss
 
 
 #Hi-C params.
@@ -22,7 +23,7 @@ del data
 
 Siamese = SiameseHiCDataset(dataset)
 
-train_sampler = torch.utils.data.RandomSampler(dataset) 
+train_sampler = torch.utils.data.RandomSampler(Siamese) 
 
 #CNN params.
 batch_size, num_classes, learning_rate =17, 3, 0.2
@@ -33,22 +34,21 @@ dataloader = DataLoader(Siamese, batch_size=batch_size, sampler = train_sampler)
 model=models.SiameseNet()
 
 # Loss and optimizer
-criterion = nn.CosineEmbeddingLoss(reduction='none')
-optimizer = optim.Adam(model.parameters())
+criterion = ContrastiveLoss()
+optimizer = optim.Adagrad(model.parameters())
 
 #  Training
 for epoch in range(30):
     running_loss=0.0
-    if (epoch % 5):
-        torch.save(model.state_dict(), 'Siamese_FirstTry.ckpt')
+    torch.save(model.state_dict(), 'Siamese_SecondTry.ckpt')
     for i, data in enumerate(dataloader):
         input1, depth1, input2, depth2,  labels = data
         labels = labels.type(torch.FloatTensor)
         # zero gradients 
         optimizer.zero_grad()
         output1, output2 = model(input1, input2)
-        #loss = torch.mean(criterion(outputs, labels))  #normal cross entropy loss 
-        loss = torch.mean(torch.mul(torch.mul(depth1,depth2).unsqueeze(1),criterion(output1, output2, labels))) #depth adjusted loss 
+        loss = criterion(output1, output2, labels)  
+        #loss = torch.mean(torch.mul(torch.mul(depth1,depth2).unsqueeze(1),criterion(output1, output2, labels))) #depth adjusted loss 
         loss.backward()
         optimizer.step()
         running_loss += loss.item()
@@ -57,4 +57,7 @@ for epoch in range(30):
             .format(epoch+1, i, running_loss/no_of_batches))
 
 
-torch.save(model.state_dict(), 'Siamese_FirstTry.ckpt')
+torch.save(model.state_dict(), 'Siamese_SecondTry.ckpt')
+
+
+
