@@ -5,7 +5,7 @@ import torch.optim as optim
 from torch.autograd import Variable
 import torch.nn.functional as F
 import torch.nn as nn
-#from torch_plus import additional_samplers
+#from torch_plus import additional_samplers, loss 
 from HiCDataset import HiCType, HiCDataset
 import models
 import torch 
@@ -39,6 +39,7 @@ model=models.DeepConvNet(num_classes)
 
 # Loss and optimizer
 criterion = nn.CrossEntropyLoss(reduction='none')
+#criterion = loss.DepthAdjustedLoss(nn.CrossEntropyLoss(reduction='none'))
 optimizer = optim.Adam(model.parameters())
 
 #  Training
@@ -52,9 +53,7 @@ for epoch in range(30):
         # zero gradients 
         optimizer.zero_grad()
         outputs = model(inputs)
-        depths = depths.type(torch.FloatTensor)
-        #loss = torch.mean(criterion(outputs, labels)) #normal cross entropy loss 
-        loss = torch.mean(torch.mul(depths,criterion(outputs, labels))) #depth adjusted loss 
+        loss = criterion(outputs, labels) #,depths=depths)
         loss.backward()
         optimizer.step()
         running_loss += loss.item()

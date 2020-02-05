@@ -28,9 +28,9 @@ dataloader = DataLoader(dataset, batch_size=batch_size, sampler = test_sampler)
 
 model = models.ConvNet(num_classes)
 model.load_state_dict(torch.load('models_final/model_10kb_cnn_no_depth_adjustment.ckpt'))
+model.eval()
 
 # Test the model
-# eval mode (batchnorm uses moving mean/variance instead of mini-batch mean/variance)
 correct = 0
 total = 0
 for i, data in enumerate(dataloader):
