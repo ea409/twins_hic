@@ -149,6 +149,7 @@ class SiameseHiCDataset(Dataset):
     def __init__(self, HiCDataset):
         self.data = None 
         self.metadata, self.data = self.make_data(HiCDataset)
+
     def make_data(self, HiCDataset):
         #to do make HiC Siamese Dataset. 
         #order goes CTCF, DKO, WT then grouped, R1, R2
@@ -161,8 +162,10 @@ class SiameseHiCDataset(Dataset):
                 for i, j in indices:
                      data.append((HiCDataset[i+ind], HiCDataset[j+ind]))
         return len(indices),tuple(data)
+
     def __len__(self):
         return len(self.data)
+
     def __getitem__(self, idx):
         #data1, depth1, data2, depth2, class1==class2
         if self.data[idx][0][0][1]==self.data[idx][1][0][1]:
@@ -185,3 +188,5 @@ if __name__ == "__main__":
     #make test
     data = HiCDataset("10kb_allreps",  data_res, resolution, split_res, transform, logicals=(['chr2'], ['WTR3','WTR4']), stride=2, depthpath="sequencing_depth.csv")
     data.save("HiCDataset_10kb_allreps_test")
+    data = HiCDataset("10kb_allreps",  data_res, resolution, split_res, transform, logicals=(['chr2'], ['WTR3','WTR4', 'R1R2']), stride=2, depthpath="sequencing_depth.csv")
+    data.save("HiCDataset_10kb_allreps_test_for_siamese")
