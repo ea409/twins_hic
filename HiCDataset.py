@@ -40,7 +40,7 @@ class HiCType:
 
 class HiCDataset(Dataset):
     """Hi-C dataset."""
-    def __init__(self, root_dir,data_res, resolution, split_res, transform, stride=2, metadatapath=None, specify_ind=None, logicals=None, depthpath=None):
+    def __init__(self, root_dir,data_res, resolution, split_res, transform, stride=2, metadatapath=None, specify_ind=None, logicals=None, depthpath=None, classes_vec=['WT','CTCFKO','DKO']):
         """
         Args:
             root_dir (string): Directory with all the images + * if it all images in dir.
@@ -48,7 +48,7 @@ class HiCDataset(Dataset):
             spec index (range): the index covering the scope of the set 
             logicals (tuple): of the form (logicals_on, logicals_off) 
         """
-        self.create_file_metadata(root_dir,metadatapath)
+        self.create_file_metadata(root_dir,metadatapath,classes_vec)
         self.metadata = ( root_dir, #root dir 
                           data_res, #data resolution
                           resolution, #resolution
@@ -74,14 +74,14 @@ class HiCDataset(Dataset):
             total+= int((met.end - met.first_index -1)/stride)+1
             self.file_metadata.at[ind,'end']= total
 
-    def create_file_metadata(self, root_dir, metadatapath):
+    def create_file_metadata(self, root_dir, metadatapath, classes_vec):
         if metadatapath is None: 
             metadata = pd.read_csv(root_dir+"/metadata.csv")
         else:
             metadata = pd.read_csv(metadatapath)
-        metadata['classification']=1
-        metadata.loc[metadata.file.str.contains('DKO'), 'classification']=2
-        metadata.loc[metadata.file.str.contains('WT'), 'classification']=0
+        metadata['classification'] = -1
+        for code, class_name in enumerate(classes_vec):
+            metadata.loc[metadata.file.str.contains(class_name), 'classification']=code 
         metadata['chromosome']=metadata.file.str.split('/').apply(lambda x: x[-1]).str.split('_').apply(lambda x: x[1])
         self.file_metadata = metadata
 
@@ -98,7 +98,7 @@ class HiCDataset(Dataset):
         else: 
             depth=pd.read_csv(depthpath, delimiter=' ')
         for i in specify_ind:
-            HiCs.append(HiCType(i, self.file_metadata, *self.metadata, depth))
+            HiCs.append(HiCType(i, self.file_metadata, *self.metadata, depth=depth))
         self.data=tuple(HiCs)
 
     def add_data(self, hicdataset):
@@ -107,7 +107,8 @@ class HiCDataset(Dataset):
             self.file_metadata=self.file_metadata.append(hicdataset.file_metadata)
             self.fix_first_end_index(1)
         else:
-            print('datasets not compatible')        
+            print('datasets not compatible')    
+
     def save(self,filename):
         with open(filename, 'wb') as output: 
             output.write(pickle.dumps(self))
@@ -146,9 +147,10 @@ class HiCDataset(Dataset):
 
 
 class SiameseHiCDataset(Dataset):
-    def __init__(self, HiCDataset):
+    def __init__(self, HiCDataset, sims=(0,1)):
         self.data = None 
         self.metadata, self.data = self.make_data(HiCDataset)
+        self.sims = sims
 
     def make_data(self, HiCDataset):
         #to do make HiC Siamese Dataset. 
@@ -157,7 +159,7 @@ class SiameseHiCDataset(Dataset):
         for chrom in HiCDataset.file_metadata.chromosome.unique():
             subset = HiCDataset.file_metadata[HiCDataset.file_metadata.chromosome==chrom].copy()
             a=np.array(subset.sort_values(by='file').first_index)
-            indices = [(a[i],a[j]) for i in range(0,6) for j in np.array(range(0,6))[:i]]
+            indices = [(a[i],a[j]) for i in range(0,len(subset)) for j in np.array(range(0,len(subset)))[:i]] #hard coded TO DO change.
             for ind in range(0, np.min(subset.end-subset.first_index)):
                 for i, j in indices:
                      data.append((HiCDataset[i+ind], HiCDataset[j+ind]))
@@ -165,13 +167,13 @@ class SiameseHiCDataset(Dataset):
 
     def __len__(self):
         return len(self.data)
-
+        
     def __getitem__(self, idx):
         #data1, depth1, data2, depth2, class1==class2
         if self.data[idx][0][0][1]==self.data[idx][1][0][1]:
-            sim = 0
+            sim = self.sims[0]
         else: 
-            sim = 1
+            sim = self.sims[1]
         return self.data[idx][0][0][0], self.data[idx][0][1], self.data[idx][1][0][0], self.data[idx][1][1], sim 
 
 if __name__ == "__main__":
