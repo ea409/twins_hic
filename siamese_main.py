@@ -10,7 +10,13 @@ from HiCDataset import HiCType, HiCDataset, SiameseHiCDataset
 import models
 import torch 
 from torch_plus.loss import ContrastiveLoss
+import argparse
 
+parser = argparse.ArgumentParser(description='Siamese network')
+parser.add_argument('learning_rate',  type=float,
+                    help='an integer for the accumulator')
+
+args = parser.parse_args()
 
 #Hi-C params.
 #resolution, split_res, data_res = 880000, 8, 10000
@@ -28,13 +34,14 @@ Siamese = SiameseHiCDataset(dataset)#,sims=(1,-1)
 train_sampler = torch.utils.data.RandomSampler(Siamese) 
 
 #CNN params.
-batch_size, num_classes, learning_rate =17, 3, 0.1 #0.05 #0.2
+batch_size, learning_rate = 17, args.learning_rate
 no_of_batches= np.floor(len(Siamese )/batch_size)
 dataloader = DataLoader(Siamese, batch_size=batch_size, sampler = train_sampler)
 
 # Convolutional neural network (two convolutional layers)
 model=models.SiameseNet().to(cuda)
-torch.save(model.state_dict(), 'outputs/Siamese_nodrop_LR0_1.ckpt')
+model_save_path = 'outputs/Siamese_nodrop_LR'+str(learning_rate)+'.ckpt'
+torch.save(model.state_dict(),model_save_path)
 
 #validation 
 dataset_validation =HiCDataset.load("/vol/bitbucket/ealjibur/data/HiCDataset_10kb_allreps_test_for_siamese")
@@ -59,7 +66,6 @@ for epoch in range(30):
         optimizer.zero_grad()
         output1, output2 = model(input1, input2)
         loss = criterion(output1, output2, labels)  
-        #loss = torch.mean(torch.mul(torch.mul(depth1,depth2).unsqueeze(1),criterion(output1, output2, labels))) #depth adjusted loss 
         loss.backward()
         optimizer.step()
         running_loss += loss.item()
@@ -85,7 +91,7 @@ for epoch in range(30):
         prev_validation_loss =  running_validation_loss
             
     
-    torch.save(model.state_dict(), 'outputs/Siamese_nodrop_LR0_1.ckpt')
+    torch.save(model.state_dict(), model_save_path)
 
 
 
