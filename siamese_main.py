@@ -14,10 +14,12 @@ from torch_plus.loss import ContrastiveLoss
 
 #Hi-C params.
 #resolution, split_res, data_res = 880000, 8, 10000
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+cuda = torch.device("cuda:0")
 
-dataset = HiCDataset.load("HiCDataset_10kb_R1")
-data = HiCDataset.load("HiCDataset_10kb_R2")
+dataset = HiCDataset.load("/vol/bitbucket/ealjibur/data/HiCDataset_10kb_R1")
+data = HiCDataset.load("/vol/bitbucket/ealjibur/data/HiCDataset_10kb_R2")
+dataset.add_data(data)
+data = HiCDataset.load("/vol/bitbucket/ealjibur/data/HiCDataset_10kb_R1R2")
 dataset.add_data(data)
 del data
 
@@ -31,11 +33,11 @@ no_of_batches= np.floor(len(Siamese )/batch_size)
 dataloader = DataLoader(Siamese, batch_size=batch_size, sampler = train_sampler)
 
 # Convolutional neural network (two convolutional layers)
-model=models.SiameseNet()
-torch.save(model.state_dict(), 'Siamese_nodrop_LR0_1.ckpt')
+model=models.SiameseNet().to(cuda)
+torch.save(model.state_dict(), 'outputs/Siamese_nodrop_LR0_1.ckpt')
 
 #validation 
-dataset_validation =HiCDataset.load("HiCDataset_10kb_allreps_test_for_siamese")
+dataset_validation =HiCDataset.load("/vol/bitbucket/ealjibur/data/HiCDataset_10kb_allreps_test_for_siamese")
 Siamese_validation = SiameseHiCDataset(dataset_validation)
 test_sampler = SequentialSampler(Siamese_validation)
 batches_validation = np.ceil(len(dataset_validation)/100)
@@ -50,8 +52,9 @@ for epoch in range(30):
     running_loss=0.0 
     running_validation_loss = 0.0
     for i, data in enumerate(dataloader):
-        input1, depth1, input2, depth2,  labels = data
-        labels = labels.type(torch.FloatTensor)
+        input1, _, input2, _,  labels = data
+        input1, input2 = input1.to(cuda), input2.to(cuda)
+        labels = labels.type(torch.FloatTensor).to(cuda)
         # zero gradients 
         optimizer.zero_grad()
         output1, output2 = model(input1, input2)
@@ -65,8 +68,9 @@ for epoch in range(30):
             .format(epoch+1, i, running_loss/no_of_batches))
 
     for i, data in enumerate(dataloader_validation):
-        input1, depth1, input2, depth2,  labels = data
-        labels = labels.type(torch.FloatTensor)
+        input1, _, input2, _,  labels = data
+        input1, input2 = input1.to(cuda), input2.to(cuda)
+        labels = labels.type(torch.FloatTensor).to(cuda)
         output1, output2 = model(input1, input2)
         loss = criterion(output1, output2, labels) 
         running_validation_loss += loss.item()
@@ -81,7 +85,7 @@ for epoch in range(30):
         prev_validation_loss =  running_validation_loss
             
     
-    torch.save(model.state_dict(), 'Siamese_nodrop_LR0_1.ckpt')
+    torch.save(model.state_dict(), 'outputs/Siamese_nodrop_LR0_1.ckpt')
 
 
 
