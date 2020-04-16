@@ -28,7 +28,7 @@ class HiCDataset(Dataset):
         straw_file = straw.straw(self.metadata['filename'])
         chromosomes = list(straw_file.chromDotSizes.data.keys() - exclude_choms) 
         self.data = []
-        for i, chromosome in enumerate(chromosomes): self.get_chromosome(straw_file,chromosome, i)
+        for i, chromosome in enumerate(chromosomes): self.get_chromosome(straw_file,chromosome)
         self.data, self.metadata = tuple(self.data), frozendict(self.metadata)
 
     def __len__(self):
@@ -37,10 +37,16 @@ class HiCDataset(Dataset):
     def __getitem__(self, idx):
         return self.data[idx]
 
-    def get_chromosome(self, straw_file, chromosome, i):  
+    def add_chromosome(self, chromosome):
+        if (chromosome in self.metadata['chromosomes'].keys()) |  (chromosome[3:] in self.metadata['chromosomes'].keys()): return print('chromosome already loaded')
+        self.data = list(self.data)
+        straw_file = straw.straw(self.metadata['filename'])
+        self.get_chromosome(straw_file,chromosome)
+
+    def get_chromosome(self, straw_file, chromosome):  
         straw_matrix = straw_file.getNormalizedMatrix(chromosome, chromosome, self.metadata['norm'], self.metadata['type_of_bin'], self.data_res)
         _, first, last = straw_file.chromDotSizes.figureOutEndpoints(chromosome)
-        #if 'chr' in chromosome: chromosome = chromosome[3:]
+        if 'chr' in chromosome: chromosome = chromosome[3:]
         self.metadata['chromosomes'][chromosome] = []
         for start_pos in range(first, last, self.split_res): self.make_matrix(straw_matrix,  start_pos, start_pos+self.resolution-self.
         data_res, chromosome) 
@@ -51,7 +57,8 @@ class HiCDataset(Dataset):
         if len(set(xpos))<self.pixel_size*0.8: return None
         xpos, ypos = np.array(xpos)-start_pos/straw_matrix.binsize, np.array(ypos)-start_pos/straw_matrix.binsize
         image_scp = csr_matrix( (vals, (xpos, ypos) ), shape=(self.pixel_size,self.pixel_size) ).toarray()
-        image_scp = (image_scp+np.transpose(image_scp)-np.diag(np.diag(image_scp)))/np.max(image_scp)
+        image_scp[np.isnan(image_scp)] = 0
+        image_scp = (image_scp+np.transpose(image_scp)-np.diag(np.diag(image_scp)))/np.nanmax(image_scp)
         image_scp = np.expand_dims(image_scp, axis=0)
         image_scp = torch.as_tensor(image_scp, dtype=torch.float)
         self.data.append((image_scp, self.metadata['class_id']))
