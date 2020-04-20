@@ -109,6 +109,7 @@ class SiameseHiCDataset(HiCDataset):
         self.sims,  self.resolution, self.data_res, self.split_res = sims, resolution, data_res, int(resolution/stride)
         self.reference, self.chromsizes = reference
         self.data =[]
+        self.positions =[] 
         self.metadata = tuple([data.metadata for data in list_of_HiCDatasets])
         self.make_data(list_of_HiCDatasets)
     
@@ -122,8 +123,13 @@ class SiameseHiCDataset(HiCDataset):
                 curr_data = []
                 for i in range(0,datasets): 
                     if positions[i][-1:]==[pos]:
+                         self.positions.append(pos)
                          curr_data.append((list_of_HiCDatasets[i][starts[i]+len(positions[i])-1][0],list_of_HiCDatasets[i][starts[i]+len(positions[i])-1][1], i) )
                          positions[i].pop()
                 self.data.extend([(curr_data[k], curr_data[j]) for k in range(0,len(curr_data)) for j in range(k+1,len(curr_data))])                    
-
+    
+    def __getitem__(self, idx):
+        data1, data2 = self.data[idx]
+        similarity = (self.sims[0] if data1[1] == data2[1] else self.sims[1])
+        return data1[0], data2[0], similarity
 
