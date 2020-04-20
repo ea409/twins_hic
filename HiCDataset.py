@@ -96,11 +96,11 @@ class GroupedHiCDataset(HiCDataset):
         if self.reference != dataset.reference: return print("incorrect reference")
         if self.resolution != dataset.resolution: return print("incorrect resolution")
         if self.data_res != dataset.data_res: return print("data resolutions do not match")
-        if dataset.metadata['filename'] in self.files: return print('file already in dataset')
+        if (dataset.metadata['filename'], dataset.metadata['norm']) in self.files: return print('file already in dataset with same normationsation')
         self.data = self.data + dataset.data
         self.metadata.append(dataset.metadata)
         self.starts.append(len(self.data))
-        self.files.add(dataset.metadata['filename'])
+        self.files.add( (dataset.metadata['filename'], dataset.metadata['norm']) )
 
 
 class SiameseHiCDataset(HiCDataset):
@@ -110,12 +110,33 @@ class SiameseHiCDataset(HiCDataset):
         self.reference, self.chromsizes = reference
         self.data =[]
         self.positions =[] 
-        self.metadata = tuple([data.metadata for data in list_of_HiCDatasets])
+        self.chromosomes = OrderedDict()
+        checks = self.check_input(list_of_HiCDatasets)
+        if not checks: return None
         self.make_data(list_of_HiCDatasets)
-    
+        self.metadata = tuple([data.metadata for data in list_of_HiCDatasets])
+        
+    def __getitem__(self, idx):
+        data1, data2 = self.data[idx]
+        similarity = (self.sims[0] if data1[1] == data2[1] else self.sims[1])
+        return data1[0], data2[0], similarity
+
+    def check_input(self, list_of_HiCDatasets):
+        filenames_norm = set()
+        for data in list_of_HiCDatasets:
+            if not isinstance(data, HiCDataset): 
+                print("List of HiCDatasets need to be a list containing only HiCDataset objects.") 
+                return False
+            if (data.metadata['filename'], data.metadata['norm']) in filenames_norm:  
+                print("file has been passed twice with the same normalisation")
+                return False
+            filenames_norm.add((data.metadata['filename'], data.metadata['norm']))
+        return True 
+
     def make_data(self, list_of_HiCDatasets):
         datasets = len(list_of_HiCDatasets)
         for chrom in self.chromsizes.keys():
+            start_index = len(self.positions)
             starts = [list_of_HiCDatasets[i].metadata['chromosomes'].setdefault(chrom, (0,0))[0] for i in range(0, datasets)]
             ends = [list_of_HiCDatasets[i].metadata['chromosomes'].setdefault(chrom, (0,0))[1] for i in range(0, datasets)]
             positions = [list(list_of_HiCDatasets[i].positions[starts[i]:ends[i]]) for i in range(0, datasets)]
@@ -127,9 +148,6 @@ class SiameseHiCDataset(HiCDataset):
                          curr_data.append((list_of_HiCDatasets[i][starts[i]+len(positions[i])-1][0],list_of_HiCDatasets[i][starts[i]+len(positions[i])-1][1], i) )
                          positions[i].pop()
                 self.data.extend([(curr_data[k], curr_data[j]) for k in range(0,len(curr_data)) for j in range(k+1,len(curr_data))])                    
-    
-    def __getitem__(self, idx):
-        data1, data2 = self.data[idx]
-        similarity = (self.sims[0] if data1[1] == data2[1] else self.sims[1])
-        return data1[0], data2[0], similarity
+            self.chromosomes[chrom] =(start_index,len(self.positions)) 
+
 
