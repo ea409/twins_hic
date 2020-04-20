@@ -1,8 +1,7 @@
-import pandas as pd 
-import numpy as np 
+import numpy as np #only import functions you need 
 import pickle 
 import straw 
-import torch
+import torch #only import functions you need 
 from collections import OrderedDict 
 from torch.utils.data import Dataset
 from scipy.sparse import csr_matrix
@@ -143,10 +142,10 @@ class SiameseHiCDataset(HiCDataset):
             for pos in range(0, self.chromsizes[chrom], self.split_res)[::-1]: 
                 curr_data = []
                 for i in range(0,datasets): 
-                    if positions[i][-1:]==[pos]:
-                         self.positions.append(pos)
-                         curr_data.append((list_of_HiCDatasets[i][starts[i]+len(positions[i])-1][0],list_of_HiCDatasets[i][starts[i]+len(positions[i])-1][1], i) )
-                         positions[i].pop()
+                    if positions[i][-1:]!=[pos]: continue
+                    self.positions.append(pos)
+                    curr_data.append((list_of_HiCDatasets[i][starts[i]+len(positions[i])-1][0],list_of_HiCDatasets[i][starts[i]+len(positions[i])-1][1], i) )
+                    positions[i].pop()
                 self.data.extend([(curr_data[k], curr_data[j]) for k in range(0,len(curr_data)) for j in range(k+1,len(curr_data))])                    
             self.chromosomes[chrom] =(start_index,len(self.positions)) 
 
