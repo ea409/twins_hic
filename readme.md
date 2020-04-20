@@ -1,3 +1,23 @@
+# Loading data from Hi-C files 
+Required input is .hic files, load these as a HiCDataset and save these. This step is time and memory intensive and so only do this once and save the output. 
+
+```
+from HiCDataset import HiCDatasetDec
+replicate_label = 'R1'
+class_id = 0
+data = HiCDatasetDec(['input.hic', replicate_label, 'KR', 'BP', class_id],10000,880000)
+data.save('input.mlhic')
+```
+
+Reload an mlhic dataset using:
+
+```
+data = HiCDatasetDec.load('input.mlhic')
+
+```
+
+
+
 # Hi-C Convolutional Neural Network
 With data taken from .hic juicer dump files at 10kb, this repo produces small 880kb cleaned images which are partially overlapping from the diagonal on 
 three biological phenotypes. The phenotypes are Wild Type, CTCF knockout and Rad21, CTCF double knockout and are all taken from mouse double positive thymocytes. 
