@@ -136,9 +136,12 @@ class SiameseHiCDataset(HiCDataset):
         datasets = len(list_of_HiCDatasets)
         for chrom in self.chromsizes.keys():
             start_index = len(self.positions)
-            starts = [list_of_HiCDatasets[i].metadata['chromosomes'].setdefault(chrom, (0,0))[0] for i in range(0, datasets)]
-            ends = [list_of_HiCDatasets[i].metadata['chromosomes'].setdefault(chrom, (0,0))[1] for i in range(0, datasets)]
-            positions = [list(list_of_HiCDatasets[i].positions[starts[i]:ends[i]]) for i in range(0, datasets)]
+            starts, positions = [], [], 
+            for i in range(0, datasets):
+                start, end = list_of_HiCDatasets[i].metadata['chromosomes'].setdefault(chrom, (0,0))
+                starts.append(start)
+                positions.append(list(list_of_HiCDatasets[i].positions[start:end] ))
+
             for pos in range(0, self.chromsizes[chrom], self.split_res)[::-1]: 
                 curr_data = []
                 for i in range(0,datasets): 
