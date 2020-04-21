@@ -3,6 +3,12 @@ This module contains an efficient data laoder and training structure for Hi-C da
 
 ## Installation and Testing
 
+### Requirements 
+
+### Installation 
+
+### Testing 
+
 ## Load Hi-C Data 
 Load Hi-C data from a `.hic` using the HiCDatasetDec type. Saving imediately after initialising is recommended since the initialisation is time and memory intensive.
 
