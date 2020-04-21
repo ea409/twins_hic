@@ -1,6 +1,10 @@
 # Hi-C Convolutional Neural Network
+This module contains an efficient data laoder and training structure for Hi-C data. The aim is to learn patterns from observations made along the diagonal of the Hi-C maps. This data is made up of reads which have typically been aligned, processed and normalised using the HiCPro pipeline. The result file is of the format `.hic`. 
+
+## Installation and Testing
+
 ## Load Hi-C Data 
-Load Hi-C data from a .hic juicer dump file using the HiCDatasetDec type. Saving imediately after initialising is recommended since the initialisation is time and memory intensive. 
+Load Hi-C data from a `.hic` using the HiCDatasetDec type. Saving imediately after initialising is recommended since the initialisation is time and memory intensive.
 
 ```
 from HiCDataset import HiCDatasetDec
@@ -15,6 +19,13 @@ Data saved as .mlhic can then be reloaded.
 data = HiCDatasetDec.load('input.mlhic')
 
 ```
+Data from multiple Hi-C experiment files can be emalgamated into one sequential dataset or into a siamese dataset. 
+
+## Run Train Models 
+
+## Run Test Models
+
+## Results
 
 <!--- With data taken from .hic juicer dump files at 10kb, this repo produces small 880kb cleaned images which are partially overlapping from the diagonal on 
 three biological phenotypes. The phenotypes are Wild Type, CTCF knockout and Rad21, CTCF double knockout and are all taken from mouse double positive thymocytes. 
