@@ -73,7 +73,7 @@ for epoch in range(30):
             .format(epoch+1, i, running_loss/no_of_batches))
 
     for i, data in enumerate(dataloader_validation):
-        input1, _, input2, _,  labels = data
+        input1,  input2, labels = data
         input1, input2 = input1.to(cuda), input2.to(cuda)
         labels = labels.type(torch.FloatTensor).to(cuda)
         output1, output2 = model(input1, input2)
