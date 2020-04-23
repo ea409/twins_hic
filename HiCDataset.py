@@ -1,47 +1,47 @@
-import numpy as np #only import functions you need 
-import pickle 
-import straw 
-import torch #only import functions you need 
-from collections import OrderedDict 
+import pickle
+import straw
+import numpy as np
+from torch import as_tensor as as_torch_tensor, float as torch_float
+from collections import OrderedDict
 from torch.utils.data import Dataset
 from scipy.sparse import csr_matrix
 from frozendict import frozendict
 
 class HiCDataset(Dataset):
     """Hi-C dataset."""
-    def __init__(self, metadata, data_res, resolution, stride=8, exclude_chroms=['All', 'chrY','chrX', 'Y', 'X', 'chrM', 'M'], reference = 'mm9'):
+    def __init__(self, metadata, data_res, resolution, stride=8, exclude_chroms=['chrY','chrX', 'Y', 'X', 'chrM', 'M'], reference = 'mm9'):
         """
-        Args: 
-        metadata: A list consisting of 
+        Args:
+        metadata: A list consisting of
             filepath: string
             replicate name: string
             norm: (one of <NONE/VC/VC_SQRT/KR>)
-            type_of_bin: (one of 'BP' or 'FRAG') 
-            class id: containg an integer specifying the biological condition of the Hi-C file.
-        data_res: The resolution for the Hi-C to be called in base pairs. 
-        resolution: the size of the overall region to be considered. 
+            type_of_bin: (one of 'BP' or 'FRAG')
+            class id: containing an integer specifying the biological condition of the Hi-C file.
+        data_res: The resolution for the Hi-C to be called in base pairs.
+        resolution: the size of the overall region to be considered.
         stride: (optional) gives the number of images which overlap.
         """
         self.reference, self.data_res, self.resolution, self.split_res,  self.pixel_size = reference, data_res, resolution, int(resolution/stride), int(resolution/data_res)
         self.metadata = {'filename': metadata[0], 'replicate': metadata[1], 'norm': metadata[2], 'type_of_bin': metadata[3], 'class_id': metadata[4], 'chromosomes': OrderedDict()}
         self.positions = []
-        self.exclude_chroms = exclude_chroms
+        self.exclude_chroms = exclude_chroms +['All', 'ALL', 'all']
         self.data = []
-    
+
     def __len__(self):
         return len(self.data)
-    
+
     def __getitem__(self, idx):
         return self.data[idx]
-    
+
     def save(self,filename):
-        with open(filename, 'wb') as output: 
+        with open(filename, 'wb') as output:
             output.write(pickle.dumps(self))
             output.close()
-    
+
     @staticmethod
     def load(filename):
-        with open(filename, 'rb') as file: 
+        with open(filename, 'rb') as file:
             unpickled = pickle.Unpickler(file)
             loadobj = unpickled.load()
         return loadobj
@@ -52,27 +52,27 @@ class HiCDatasetDec(HiCDataset):
     def __init__(self, *args, **kwargs):
         super(HiCDatasetDec, self).__init__(*args, **kwargs)
         straw_file = straw.straw(self.metadata['filename'])
-        chromosomes = list(straw_file.chromDotSizes.data.keys() - self.exclude_chroms) 
+        chromosomes = list(straw_file.chromDotSizes.data.keys() - self.exclude_chroms)
         for chromosome in chromosomes: self.get_chromosome(straw_file,chromosome)
         self.data, self.metadata, self.positions = tuple(self.data), frozendict(self.metadata), tuple(self.positions)
-    
+
     def add_chromosome(self, chromosome):
         if (chromosome in self.metadata['chromosomes'].keys()) |  (chromosome[3:] in self.metadata['chromosomes'].keys()): return print('chromosome already loaded')
         self.data, self.positions = list(self.data), list(self.positions)
         straw_file = straw.straw(self.metadata['filename'])
         self.get_chromosome(straw_file,chromosome)
         self.data, self.positions = tuple(self.data), tuple(self.positions)
-    
-    def get_chromosome(self, straw_file, chromosome):  
+
+    def get_chromosome(self, straw_file, chromosome):
         straw_matrix = straw_file.getNormalizedMatrix(chromosome, chromosome, self.metadata['norm'], self.metadata['type_of_bin'], self.data_res)
         _, first, last = straw_file.chromDotSizes.figureOutEndpoints(chromosome)
         initial = len(self.positions)
         if 'chr' in chromosome: chromosome = chromosome[3:]
         self.metadata['chromosomes'][chromosome] = []
         for start_pos in range(first, last, self.split_res): self.make_matrix(straw_matrix,  start_pos, start_pos+self.resolution-self.
-        data_res, chromosome) 
+        data_res, chromosome)
         self.metadata['chromosomes'][chromosome]= (initial, len(self.positions))
-    
+
     def make_matrix(self, straw_matrix, start_pos, end_pos, chromosome):
         xpos, ypos, vals = straw_matrix.getDataFromGenomeRegion(start_pos, end_pos, start_pos, end_pos)
         if len(set(xpos))<self.pixel_size*0.8: return None
@@ -81,21 +81,25 @@ class HiCDatasetDec(HiCDataset):
         image_scp[np.isnan(image_scp)] = 0
         image_scp = (image_scp+np.transpose(image_scp)-np.diag(np.diag(image_scp)))/np.nanmax(image_scp)
         image_scp = np.expand_dims(image_scp, axis=0)
-        image_scp = torch.as_tensor(image_scp, dtype=torch.float)
+        image_scp = as_torch_tensor(image_scp, dtype=torch_float)
         self.data.append((image_scp, self.metadata['class_id']))
         self.positions.append(start_pos)
 
 class GroupedHiCDataset(HiCDataset):
     """Grouping multiple Hi-C datasets together"""
-    def __init__(self, reference = 'mm9', resolution=880000, data_res=10000):
+    def __init__(self, list_of_HiCDataset = None,reference = 'mm9', resolution=880000, data_res=10000):
         self.reference, self.resolution, self.data_res = reference, resolution, data_res
-        self.data,  self.metadata, self.starts, self.files = tuple(), [], [], set()   
+        self.data,  self.metadata, self.starts, self.files = tuple(), [], [], set()
+        if list_of_HiCDataset is not None:
+            if not isinstance(list_of_HiCDataset, list): return print("list of HiCDataset is not list type")
+            for dataset in list_of_HiCDataset: self.add_data(dataset)
 
     def add_data(self, dataset):
+        if not isinstance(dataset, HiCDataset): return print("file not HiCDataset")
         if self.reference != dataset.reference: return print("incorrect reference")
         if self.resolution != dataset.resolution: return print("incorrect resolution")
         if self.data_res != dataset.data_res: return print("data resolutions do not match")
-        if (dataset.metadata['filename'], dataset.metadata['norm']) in self.files: return print('file already in dataset with same normationsation')
+        if (dataset.metadata['filename'], dataset.metadata['norm']) in self.files: return print('file already in dataset with same normationsation') #maybe make this a warning instead of not doing it
         self.data = self.data + dataset.data
         self.metadata.append(dataset.metadata)
         self.starts.append(len(self.data))
@@ -104,17 +108,17 @@ class GroupedHiCDataset(HiCDataset):
 
 class SiameseHiCDataset(HiCDataset):
     """Paired Hi-C datasets by genomic location."""
-    def __init__(self, list_of_HiCDatasets, sims=(0,1), reference = ['mm9',{'1':197195432,'2':181748087,'3':159599783,'4':155630120,'5':152537259,'6':149517037,'7':152524553,'8':131738871,'9':124076172,'10':129993255,'11':121843856,'12':121257530,'13':120284312, '14':125194864,'15':103494974, '16':98319150,'17':95272651,'18':90772031,'19':61342430}], resolution=880000, stride=1, data_res=10000):
+    def __init__(self, list_of_HiCDatasets, sims=(0,1), reference = ['mm9',{'1':197195432,'2':181748087,'3':159599783,'4':155630120,'5':152537259,'6':149517037,'7':152524553,'8':131738871,'9':124076172,'10':129993255,'11':121843856,'12':121257530,'13':120284312, '14':125194864,'15':103494974, '16':98319150,'17':95272651,'18':90772031,'19':61342430}], resolution=880000, stride=8, data_res=10000):
         self.sims,  self.resolution, self.data_res, self.split_res = sims, resolution, data_res, int(resolution/stride)
         self.reference, self.chromsizes = reference
         self.data =[]
-        self.positions =[] 
+        self.positions =[]
         self.chromosomes = OrderedDict()
         checks = self.check_input(list_of_HiCDatasets)
         if not checks: return None
         self.make_data(list_of_HiCDatasets)
         self.metadata = tuple([data.metadata for data in list_of_HiCDatasets])
-        
+
     def __getitem__(self, idx):
         data1, data2 = self.data[idx]
         similarity = (self.sims[0] if data1[1] == data2[1] else self.sims[1])
@@ -122,15 +126,19 @@ class SiameseHiCDataset(HiCDataset):
 
     def check_input(self, list_of_HiCDatasets):
         filenames_norm = set()
+        if not isinstance(list_of_HiCDatasets, list): print("list of HiCdatasets is not list type")
         for data in list_of_HiCDatasets:
-            if not isinstance(data, HiCDataset): 
-                print("List of HiCDatasets need to be a list containing only HiCDataset objects.") 
+            if not isinstance(data, HiCDataset):
+                print("List of HiCDatasets need to be a list containing only HiCDataset objects.")
                 return False
-            if (data.metadata['filename'], data.metadata['norm']) in filenames_norm:  
-                print("file has been passed twice with the same normalisation")
+            if (data.metadata['filename'], data.metadata['norm']) in filenames_norm:
+                print("file has been passed twice with the same normalisation") #maybe make this a warning instead of not doing it
                 return False
             filenames_norm.add((data.metadata['filename'], data.metadata['norm']))
-        return True 
+        return True
+
+    def check_input_parameters(self, dataset): #where we check if the dataset is compatible with what we want to do
+        pass
 
     def make_data(self, list_of_HiCDatasets):
         datasets = len(list_of_HiCDatasets)
@@ -142,14 +150,14 @@ class SiameseHiCDataset(HiCDataset):
                 starts.append(start)
                 positions.append(list(list_of_HiCDatasets[i].positions[start:end]))
 
-            for pos in range(0, self.chromsizes[chrom], self.split_res)[::-1]: 
+            for pos in range(0, self.chromsizes[chrom], self.split_res)[::-1]:
                 curr_data = []
-                for i in range(0,datasets): 
+                for i in range(0,datasets):
                     if positions[i][-1:]!=[pos]: continue
                     self.positions.append(pos)
-                    curr_data.append((list_of_HiCDatasets[i][starts[i]+len(positions[i])-1][0],list_of_HiCDatasets[i][starts[i]+len(positions[i])-1][1], i) )
+                    curr_data.append((*list_of_HiCDatasets[i][starts[i]+len(positions[i])-1], i) )
                     positions[i].pop()
-                self.data.extend([(curr_data[k], curr_data[j]) for k in range(0,len(curr_data)) for j in range(k+1,len(curr_data))])                    
-            self.chromosomes[chrom] =(start_index,len(self.positions)) 
+                self.data.extend([(curr_data[k], curr_data[j]) for k in range(0,len(curr_data)) for j in range(k+1,len(curr_data))])
+            self.chromosomes[chrom] =(start_index,len(self.positions))
 
 

@@ -6,9 +6,9 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 import torch.nn as nn
 #from torch_plus import additional_samplers
-from HiCDataset import HiCType, HiCDataset, SiameseHiCDataset
+from HiCDataset import HiCDatasetDec, SiameseHiCDataset
 import models
-import torch 
+import torch
 from torch_plus.loss import ContrastiveLoss
 import argparse
 
@@ -22,16 +22,15 @@ args = parser.parse_args()
 #resolution, split_res, data_res = 880000, 8, 10000
 cuda = torch.device("cuda:0")
 
-dataset = HiCDataset.load("/vol/bitbucket/ealjibur/data/HiCDataset_10kb_R1")
-data = HiCDataset.load("/vol/bitbucket/ealjibur/data/HiCDataset_10kb_R2")
-dataset.add_data(data)
-data = HiCDataset.load("/vol/bitbucket/ealjibur/data/HiCDataset_10kb_R1R2")
-dataset.add_data(data)
-del data
 
-Siamese = SiameseHiCDataset(dataset)#,sims=(1,-1)
+hg19_dict = {'1': 249250621, '2': 243199373, '3': 198022430, '4': 191154276, '5': 180915260, '6': 171115067, '7': 159138663, '8': 146364022, '9': 141213431, '10': 135534747, '11': 135006516, '12': 133851895, '13': 115169878, '14': 107349540, '15': 102531392, '16': 90354753, '17': 81195210, '18': 78077248, '19': 59128983, '20': 63025520, '21': 48129895, '22': 51304566}
 
-train_sampler = torch.utils.data.RandomSampler(Siamese) 
+path = '/vol/bitbucket/ealjibur/data/'
+
+dataset = [HiCDatasetDec.load(path + "GSM3112404_MDM_6h_" + i + "_"+ j + ".mlhic", ) for i in ['mock', 'H5N1-UV','H5N1'] for j in ['r1','r2'] ]
+Siamese = SiameseHiCDataset(dataset,reference = ['hg19', hg19_dict])#,sims=(1,-1)
+
+train_sampler = torch.utils.data.RandomSampler(Siamese)
 
 #CNN params.
 batch_size, learning_rate = 17, args.learning_rate
@@ -43,12 +42,12 @@ model=models.SiameseNet().to(cuda)
 model_save_path = 'outputs/Siamese_nodrop_LR'+str(learning_rate)+'.ckpt'
 torch.save(model.state_dict(),model_save_path)
 
-#validation 
-dataset_validation =HiCDataset.load("/vol/bitbucket/ealjibur/data/HiCDataset_10kb_allreps_test_for_siamese")
-Siamese_validation = SiameseHiCDataset(dataset_validation)
+#validation
+dataset_validation = [HiCDatasetDec.load(path + "GSM3112404_validation_MDM_6h_" + i + "_"+ j + ".mlhic", ) for i in ['mock', 'H5N1-UV','H5N1'] for j in ['r1','r2'] ]
+Siamese_validation = SiameseHiCDataset(dataset_validation, reference = ['hg19', hg19_dict])
 test_sampler = SequentialSampler(Siamese_validation)
 batches_validation = np.ceil(len(dataset_validation)/100)
-dataloader_validation = DataLoader(Siamese_validation, batch_size=100, sampler = test_sampler)  
+dataloader_validation = DataLoader(Siamese_validation, batch_size=100, sampler = test_sampler)
 
 # Loss and optimizer
 criterion = ContrastiveLoss() #torch.nn.CosineEmbeddingLoss() #
@@ -56,16 +55,16 @@ optimizer = optim.Adagrad(model.parameters())
 
 #  Training
 for epoch in range(30):
-    running_loss=0.0 
+    running_loss=0.0
     running_validation_loss = 0.0
     for i, data in enumerate(dataloader):
-        input1, _, input2, _,  labels = data
+        input1, input2,  labels = data
         input1, input2 = input1.to(cuda), input2.to(cuda)
         labels = labels.type(torch.FloatTensor).to(cuda)
-        # zero gradients 
+        # zero gradients
         optimizer.zero_grad()
         output1, output2 = model(input1, input2)
-        loss = criterion(output1, output2, labels)  
+        loss = criterion(output1, output2, labels)
         loss.backward()
         optimizer.step()
         running_loss += loss.item()
@@ -78,7 +77,7 @@ for epoch in range(30):
         input1, input2 = input1.to(cuda), input2.to(cuda)
         labels = labels.type(torch.FloatTensor).to(cuda)
         output1, output2 = model(input1, input2)
-        loss = criterion(output1, output2, labels) 
+        loss = criterion(output1, output2, labels)
         running_validation_loss += loss.item()
 
     print ('Epoch [{}/{}], Loss: {:.4f}'
@@ -87,10 +86,9 @@ for epoch in range(30):
         prev_validation_loss = min(prev_validation_loss,running_validation_loss)
         if (float(prev_validation_loss) +  0.1 < float(running_validation_loss)):
             break
-    else: 
+    else:
         prev_validation_loss =  running_validation_loss
-            
-    
+
     torch.save(model.state_dict(), model_save_path)
 
 
