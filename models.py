@@ -26,9 +26,9 @@ class dConvNet(nn.Module):
     def __init__(self, num_classes):
         super(dConvNet, self).__init__()
         self.features = nn.Sequential(
-            nn.Conv2d(1, 20, 5,dilation=2), 
+            nn.Conv2d(1, 20, 5,dilation=2),
             nn.MaxPool2d(2, 2),
-            nn.Conv2d(20, 16, 5,dilation=2), 
+            nn.Conv2d(20, 16, 5,dilation=2),
             nn.MaxPool2d(2, 2),
         )
         self.classifier = nn.Sequential(
@@ -76,14 +76,14 @@ class DeepConvNet(nn.Module):
     def __init__(self, num_classes):
         super(DeepConvNet, self).__init__()
         convnat = nn.Sequential(
-            nn.Conv2d(20,20, 3), 
+            nn.Conv2d(20,20, 3),
             nn.MaxPool2d(2, 2),
             nn.BatchNorm2d(20),
         )
         self.features = nn.Sequential(
-            nn.Conv2d(1, 20, 3), 
+            nn.Conv2d(1, 20, 3),
             nn.MaxPool2d(2, 2),
-            nn.BatchNorm2d(20), 
+            nn.BatchNorm2d(20),
             convnat,
             convnat,
             convnat,
@@ -106,9 +106,9 @@ class SiameseNet(nn.Module):
     def __init__(self):
         super(SiameseNet, self).__init__()
         self.features = nn.Sequential(
-            nn.Conv2d(1, 20, 5), 
+            nn.Conv2d(1, 20, 5),
             nn.MaxPool2d(2, 2),
-            nn.Conv2d(20, 16, 5), 
+            nn.Conv2d(20, 16, 5),
             nn.MaxPool2d(2, 2),
         )
         self.linear = nn.Sequential(
@@ -168,9 +168,9 @@ class SiameseNet2(nn.Module):
     def __init__(self):
         super(SiameseNet2, self).__init__()
         self.features = nn.Sequential(
-            nn.Conv2d(1, 20, 5), 
+            nn.Conv2d(1, 20, 5),
             nn.MaxPool2d(2, 2),
-            nn.Conv2d(20, 16, 5), 
+            nn.Conv2d(20, 16, 5),
             nn.MaxPool2d(2, 2),
         )
         self.linear = nn.Sequential(
@@ -197,9 +197,9 @@ class SiameseNet3(nn.Module):
     def __init__(self):
         super(SiameseNet3, self).__init__()
         self.features = nn.Sequential(
-            nn.Conv2d(1, 20, 5), 
+            nn.Conv2d(1, 20, 5),
             nn.MaxPool2d(2, 2),
-            nn.Conv2d(20, 16, 5), 
+            nn.Conv2d(20, 16, 5),
             nn.MaxPool2d(2, 2),
         )
         self.linear = nn.Sequential(
@@ -227,9 +227,9 @@ class SiameseNet4(nn.Module):
     def __init__(self):
         super(SiameseNet4, self).__init__()
         self.features = nn.Sequential(
-            nn.Conv2d(1, 20, 5), 
+            nn.Conv2d(1, 20, 5),
             nn.MaxPool2d(2, 2),
-            nn.Conv2d(20, 16, 5), 
+            nn.Conv2d(20, 16, 5),
             nn.MaxPool2d(2, 2),
         )
         self.linear = nn.Sequential(
@@ -254,9 +254,9 @@ class SiameseNet5(nn.Module):
     def __init__(self):
         super(SiameseNet5, self).__init__()
         self.features = nn.Sequential(
-            nn.Conv2d(1, 20, 5), 
+            nn.Conv2d(1, 20, 5),
             nn.MaxPool2d(2, 2),
-            nn.Conv2d(20, 16, 5), 
+            nn.Conv2d(20, 16, 5),
             nn.MaxPool2d(2, 2),
         )
         self.linear = nn.Sequential(

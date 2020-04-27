@@ -75,7 +75,7 @@ class HiCDatasetDec(HiCDataset):
 
     def make_matrix(self, straw_matrix, start_pos, end_pos, chromosome):
         xpos, ypos, vals = straw_matrix.getDataFromGenomeRegion(start_pos, end_pos, start_pos, end_pos)
-        if len(set(xpos))<self.pixel_size*0.8: return None
+        if (len(set(xpos))<self.pixel_size*0.8) |  (np.sum(np.isnan(vals)) > 0.5*len(vals)) : return None
         xpos, ypos = np.array(xpos)-start_pos/straw_matrix.binsize, np.array(ypos)-start_pos/straw_matrix.binsize
         image_scp = csr_matrix( (vals, (xpos, ypos) ), shape=(self.pixel_size,self.pixel_size) ).toarray()
         image_scp[np.isnan(image_scp)] = 0
@@ -87,11 +87,11 @@ class HiCDatasetDec(HiCDataset):
 
 class GroupedHiCDataset(HiCDataset):
     """Grouping multiple Hi-C datasets together"""
-    def __init__(self, list_of_HiCDataset = None,reference = 'mm9', resolution=880000, data_res=10000):
+    def __init__(self, list_of_HiCDataset = None, reference = 'mm9', resolution=880000, data_res=10000):
         self.reference, self.resolution, self.data_res = reference, resolution, data_res
         self.data,  self.metadata, self.starts, self.files = tuple(), [], [], set()
         if list_of_HiCDataset is not None:
-            if not isinstance(list_of_HiCDataset, list): return print("list of HiCDataset is not list type")
+            if not isinstance(list_of_HiCDataset, list): print("list of HiCDataset is not list type") #stop running
             for dataset in list_of_HiCDataset: self.add_data(dataset)
 
     def add_data(self, dataset):
@@ -99,7 +99,7 @@ class GroupedHiCDataset(HiCDataset):
         if self.reference != dataset.reference: return print("incorrect reference")
         if self.resolution != dataset.resolution: return print("incorrect resolution")
         if self.data_res != dataset.data_res: return print("data resolutions do not match")
-        if (dataset.metadata['filename'], dataset.metadata['norm']) in self.files: return print('file already in dataset with same normationsation') #maybe make this a warning instead of not doing it
+        if (dataset.metadata['filename'], dataset.metadata['norm']) in self.files: print('file already in dataset with same normationsation') #maybe make this a warning instead of not doing it
         self.data = self.data + dataset.data
         self.metadata.append(dataset.metadata)
         self.starts.append(len(self.data))
@@ -133,7 +133,6 @@ class SiameseHiCDataset(HiCDataset):
                 return False
             if (data.metadata['filename'], data.metadata['norm']) in filenames_norm:
                 print("file has been passed twice with the same normalisation") #maybe make this a warning instead of not doing it
-                return False
             filenames_norm.add((data.metadata['filename'], data.metadata['norm']))
         return True
 

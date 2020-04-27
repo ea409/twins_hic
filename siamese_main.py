@@ -27,7 +27,7 @@ hg19_dict = {'1': 249250621, '2': 243199373, '3': 198022430, '4': 191154276, '5'
 
 path = '/vol/bitbucket/ealjibur/data/'
 
-dataset = [HiCDatasetDec.load(path + "GSM3112404_MDM_6h_" + i + "_"+ j + ".mlhic", ) for i in ['mock', 'H5N1-UV','H5N1'] for j in ['r1','r2'] ]
+dataset = [HiCDatasetDec.load(path + "GSE113703_MDM_6h_" + i + "_"+ j + ".mlhic" ) for i in ['mock', 'H5N1-UV','H5N1'] for j in ['r1','r2'] ]
 Siamese = SiameseHiCDataset(dataset,reference = ['hg19', hg19_dict])#,sims=(1,-1)
 
 train_sampler = torch.utils.data.RandomSampler(Siamese)
@@ -43,7 +43,7 @@ model_save_path = 'outputs/Siamese_nodrop_LR'+str(learning_rate)+'.ckpt'
 torch.save(model.state_dict(),model_save_path)
 
 #validation
-dataset_validation = [HiCDatasetDec.load(path + "GSM3112404_validation_MDM_6h_" + i + "_"+ j + ".mlhic", ) for i in ['mock', 'H5N1-UV','H5N1'] for j in ['r1','r2'] ]
+dataset_validation = [HiCDatasetDec.load(path + "GSE113703_validation_MDM_6h_" + i + "_"+ j + ".mlhic") for i in ['mock', 'H5N1-UV','H5N1'] for j in ['r1','r2'] ]
 Siamese_validation = SiameseHiCDataset(dataset_validation, reference = ['hg19', hg19_dict])
 test_sampler = SequentialSampler(Siamese_validation)
 batches_validation = np.ceil(len(dataset_validation)/100)
