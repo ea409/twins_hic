@@ -27,11 +27,12 @@ data_condition2 = HiCDatasetDec.load('input2.mlhic')
 data_condition3 = HiCDatasetDec.load('input3.mlhic')
 
 from HiCDataset import GroupedHiCDataset
-grouped_dataset = GroupedHiCDataset([data_condition1,data_condition2, data_condition3])
+grouped_dataset = GroupedHiCDataset([data_condition1,data_condition2, data_condition3], reference = 'mm9')
 
 from HiCDataset import SiameseHiCDataset
-siamese = SiameseHiCDataset([data_condition1, data_condition2]) 
-grouped = GroupedHiCDataset( [ SiameseHiCDataset([data_condition1, data_condition2]),  SiameseHiCDataset([data_condition3, data_condition2])])
+siamese1 = SiameseHiCDataset([data_condition1, data_condition2]) 
+siamese2 = SiameseHiCDataset([data_condition1, data_condition3])
+grouped = GroupedHiCDataset( [siamese1, siamese2], reference = 'mm9')
 
 ```
 
