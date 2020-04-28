@@ -19,13 +19,21 @@ class_id = 0 #class identifier must be int
 data = HiCDatasetDec(['input.hic', replicate_id , 'KR', 'BP', class_id],10000,880000)
 data.save('input.mlhic')
 ```
-Data saved as .mlhic can then be reloaded. 
+Data saved as .mlhic can then be reloaded. Data from multiple Hi-C experiment files can be emalgamated into one sequential dataset or into a siamese dataset (i.e. paired by genomic location). Many siamese datasets or Hi-C datsets can be joined together. 
 
 ```
-data = HiCDatasetDec.load('input.mlhic')
+data_condition1 = HiCDatasetDec.load('input.mlhic')
+data_condition2 = HiCDatasetDec.load('input2.mlhic')
+data_condition3 = HiCDatasetDec.load('input3.mlhic')
+
+from HiCDataset import GroupedHiCDataset
+grouped_dataset = GroupedHiCDataset([data_condition1,data_condition2, data_condition3], reference='mm9')
+
+from HiCDataset import SiameseHiCDataset
+siamese = SiameseHiCDataset([data_condition1, data_condition2]) #if reference is not mm9 or one of the available reference genomes, need to use a chrom sizes file to make a reference dictionary. 
+grouped = GroupedHiCDataset( [ SiameseHiCDataset([data_condition1, data_condition2]),  SiameseHiCDataset([data_condition3, data_condition2])] , reference  =  'mm9' )
 
 ```
-Data from multiple Hi-C experiment files can be emalgamated into one sequential dataset or into a siamese dataset. 
 
 ## Run Train Models 
 
