@@ -6,7 +6,7 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 import torch.nn as nn
 #from torch_plus import additional_samplers
-from HiCDataset import HiCDatasetDec, SiameseHiCDataset
+from HiCDataset import HiCDatasetDec, SiameseHiCDataset,GroupedHiCDataset
 import models
 import torch
 from torch_plus.loss import ContrastiveLoss
@@ -18,18 +18,14 @@ parser.add_argument('learning_rate',  type=float,
 
 args = parser.parse_args()
 
-#Hi-C params.
-#resolution, split_res, data_res = 880000, 8, 10000
 cuda = torch.device("cuda:0")
-
-
 hg19_dict = {'1': 249250621, '2': 243199373, '3': 198022430, '4': 191154276, '5': 180915260, '6': 171115067, '7': 159138663, '8': 146364022, '9': 141213431, '10': 135534747, '11': 135006516, '12': 133851895, '13': 115169878, '14': 107349540, '15': 102531392, '16': 90354753, '17': 81195210, '18': 78077248, '19': 59128983, '20': 63025520, '21': 48129895, '22': 51304566}
-
 path = '/vol/bitbucket/ealjibur/data/'
 
-dataset = [HiCDatasetDec.load(path + "GSE113703_MDM_6h_" + i + "_"+ j + ".mlhic" ) for i in ['mock', 'H5N1-UV','H5N1'] for j in ['r1','r2'] ]
-Siamese = SiameseHiCDataset(dataset,reference = ['hg19', hg19_dict])#,sims=(1,-1)
-
+#dataset all about
+dataset = [ SiameseHiCDataset([HiCDatasetDec.load(path + "GSE113703_MDM_"+time+"_" + i + "_"+ j + ".mlhic" ) for i in ['mock', 'H5N1-UV','H5N1'] for j in ['r1','r2'] ],
+             reference = ['hg19', hg19_dict] ) for time in ['6h', '12h','18h']]
+Siamese = GroupedHiCDataset( dataset, reference ='hg19')
 train_sampler = torch.utils.data.RandomSampler(Siamese)
 
 #CNN params.
@@ -37,17 +33,18 @@ batch_size, learning_rate = 17, args.learning_rate
 no_of_batches= np.floor(len(Siamese )/batch_size)
 dataloader = DataLoader(Siamese, batch_size=batch_size, sampler = train_sampler)
 
+#validation
+dataset_validation = [ SiameseHiCDataset([HiCDatasetDec.load(path + "GSE113703_validation_MDM_"+time+"_" + i + "_"+ j + ".mlhic" ) for i in ['mock', 'H5N1-UV','H5N1'] for j in ['r1','r2'] ],
+             reference = ['hg19', hg19_dict] ) for time in ['6h', '12h','18h']]
+Siamese_validation  = GroupedHiCDataset( dataset_validation, reference ='hg19')
+test_sampler = SequentialSampler(Siamese_validation)
+batches_validation = np.ceil(len(dataset_validation)/100)
+dataloader_validation = DataLoader(Siamese_validation, batch_size=100, sampler = test_sampler)
+
 # Convolutional neural network (two convolutional layers)
 model=models.SiameseNet().to(cuda)
 model_save_path = 'outputs/Siamese_nodrop_LR'+str(learning_rate)+'.ckpt'
 torch.save(model.state_dict(),model_save_path)
-
-#validation
-dataset_validation = [HiCDatasetDec.load(path + "GSE113703_validation_MDM_6h_" + i + "_"+ j + ".mlhic") for i in ['mock', 'H5N1-UV','H5N1'] for j in ['r1','r2'] ]
-Siamese_validation = SiameseHiCDataset(dataset_validation, reference = ['hg19', hg19_dict])
-test_sampler = SequentialSampler(Siamese_validation)
-batches_validation = np.ceil(len(dataset_validation)/100)
-dataloader_validation = DataLoader(Siamese_validation, batch_size=100, sampler = test_sampler)
 
 # Loss and optimizer
 criterion = ContrastiveLoss() #torch.nn.CosineEmbeddingLoss() #

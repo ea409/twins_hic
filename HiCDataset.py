@@ -99,12 +99,9 @@ class GroupedHiCDataset(HiCDataset):
         if self.reference != dataset.reference: return print("incorrect reference")
         if self.resolution != dataset.resolution: return print("incorrect resolution")
         if self.data_res != dataset.data_res: return print("data resolutions do not match")
-        if (dataset.metadata['filename'], dataset.metadata['norm']) in self.files: print('file already in dataset with same normationsation') #maybe make this a warning instead of not doing it
         self.data = self.data + dataset.data
         self.metadata.append(dataset.metadata)
         self.starts.append(len(self.data))
-        self.files.add( (dataset.metadata['filename'], dataset.metadata['norm']) )
-
 
 class SiameseHiCDataset(HiCDataset):
     """Paired Hi-C datasets by genomic location."""
@@ -118,11 +115,6 @@ class SiameseHiCDataset(HiCDataset):
         if not checks: return None
         self.make_data(list_of_HiCDatasets)
         self.metadata = tuple([data.metadata for data in list_of_HiCDatasets])
-
-    def __getitem__(self, idx):
-        data1, data2 = self.data[idx]
-        similarity = (self.sims[0] if data1[1] == data2[1] else self.sims[1])
-        return data1[0], data2[0], similarity
 
     def check_input(self, list_of_HiCDatasets):
         filenames_norm = set()
@@ -148,15 +140,15 @@ class SiameseHiCDataset(HiCDataset):
                 start, end = list_of_HiCDatasets[i].metadata['chromosomes'].setdefault(chrom, (0,0))
                 starts.append(start)
                 positions.append(list(list_of_HiCDatasets[i].positions[start:end]))
-
             for pos in range(0, self.chromsizes[chrom], self.split_res)[::-1]:
                 curr_data = []
                 for i in range(0,datasets):
                     if positions[i][-1:]!=[pos]: continue
-                    self.positions.append(pos)
-                    curr_data.append((*list_of_HiCDatasets[i][starts[i]+len(positions[i])-1], i) )
+                    curr_data.append(list_of_HiCDatasets[i][starts[i]+len(positions[i])-1] )
                     positions[i].pop()
-                self.data.extend([(curr_data[k], curr_data[j]) for k in range(0,len(curr_data)) for j in range(k+1,len(curr_data))])
+                self.data.extend([(curr_data[k][0], curr_data[j][0], (self.sims[0] if curr_data[k][1] == curr_data[j][1] else self.sims[1]) ) for k in range(0,len(curr_data)) for j in range(k+1,len(curr_data))])
+                self.positions.extend( [(pos, k, j) for k in range(0,len(curr_data)) for j in range(k+1,len(curr_data))])
             self.chromosomes[chrom] =(start_index,len(self.positions))
+        self.data = tuple(self.data)
 
 
