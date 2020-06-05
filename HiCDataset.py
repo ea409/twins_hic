@@ -6,6 +6,7 @@ from collections import OrderedDict
 from torch.utils.data import Dataset
 from scipy.sparse import csr_matrix
 from frozendict import frozendict
+import cooler
 
 class HiCDataset(Dataset):
     """Hi-C dataset."""
@@ -169,7 +170,7 @@ class HiCDatasetCool(HiCDataset):
 
     def add_chromosome(self, chromosome):
         if (chromosome in self.metadata['chromosomes'].keys()) |  (chromosome[3:] in self.metadata['chromosomes'].keys()): return print('chromosome already loaded')
-        self.data, self.positions = list(self.data), list(self.positions)
+        self.data, self.positions = list(self.data), list(self.pcositions)
         cl_file = cooler.Cooler(self.metadata['filename'])
         self.get_chromosome(cl_file, chromosome)
         self.data, self.positions = tuple(self.data), tuple(self.positions)
