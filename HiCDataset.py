@@ -151,4 +151,45 @@ class SiameseHiCDataset(HiCDataset):
             self.chromosomes[chrom] =(start_index,len(self.positions))
         self.data = tuple(self.data)
 
+class HiCDatasetCool(HiCDataset):
+    """Hi-C dataset loader"""
+    def __init__(self, metadata, resolution, **kwargs):
+        """ metadata: A list consisting of
+            filepath: string
+            replicate name: string
+            norm: (one of <None/cool_norm>)
+            class id: containing an integer specifying the biological condition of the Hi-C file."""
+        cl_file= cooler.Cooler(metadata[0])
+        metadata[2] = (metadata[2]=="cool_norm")
+        metadata.insert(3, "NA")
+        super(HiCDatasetCool, self).__init__(metadata, cl_file.binsize, resolution, reference = cl_file.info["genome-assembly"], **kwargs)
+        chromosomes = list(set(cl_file.chromnames) - set(self.exclude_chroms))
+        for chromosome in chromosomes: self.get_chromosome(cl_file, chromosome)
+        self.data, self.metadata, self.positions = tuple(self.data), frozendict(self.metadata), tuple(self.positions)
+
+    def add_chromosome(self, chromosome):
+        if (chromosome in self.metadata['chromosomes'].keys()) |  (chromosome[3:] in self.metadata['chromosomes'].keys()): return print('chromosome already loaded')
+        self.data, self.positions = list(self.data), list(self.positions)
+        cl_file = cooler.Cooler(self.metadata['filename'])
+        self.get_chromosome(cl_file, chromosome)
+        self.data, self.positions = tuple(self.data), tuple(self.positions)
+
+    def get_chromosome(self, cl_file, chromosome):
+        stride = int(self.split_res/self.data_res)
+        cl_matrix = cl_file.matrix(balance = self.metadata['norm'])
+        first, last = cl_file.extent(chromosome)
+        initial = len(self.positions)
+        self.metadata['chromosomes'][chromosome] = []
+        for start_pos in range(first, last, stride): self.make_matrix(cl_matrix,  start_pos, first)
+        self.metadata['chromosomes'][chromosome]= (initial, len(self.positions))
+
+    def make_matrix(self, cl_matrix, start_pos, first):
+        image_scp = cl_matrix[start_pos:start_pos+self.pixel_size, start_pos:start_pos+self.pixel_size]
+        if ( sum(sum(np.isnan(image_scp)| image_scp==0 )) > self.pixel_size*self.pixel_size*0.05) : return None
+        image_scp[np.isnan(image_scp)] = 0
+        image_scp = (image_scp+np.transpose(image_scp)-np.diag(np.diag(image_scp)))/np.nanmax(image_scp)
+        image_scp = np.expand_dims(image_scp, axis=0)
+        image_scp = as_torch_tensor(image_scp, dtype=torch_float)
+        self.data.append((image_scp, self.metadata['class_id']))
+        self.positions.append( int(self.data_res*(start_pos-first)))
 
