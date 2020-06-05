@@ -188,7 +188,7 @@ class HiCDatasetCool(HiCDataset):
         image_scp = cl_matrix[start_pos:start_pos+self.pixel_size, start_pos:start_pos+self.pixel_size]
         if ( sum(sum(np.isnan(image_scp)| image_scp==0 )) > self.pixel_size*self.pixel_size*0.05) : return None
         image_scp[np.isnan(image_scp)] = 0
-        image_scp = (image_scp+np.transpose(image_scp)-np.diag(np.diag(image_scp)))/np.nanmax(image_scp)
+        image_scp = image_scp/np.nanmax(image_scp)
         image_scp = np.expand_dims(image_scp, axis=0)
         image_scp = as_torch_tensor(image_scp, dtype=torch_float)
         self.data.append((image_scp, self.metadata['class_id']))
