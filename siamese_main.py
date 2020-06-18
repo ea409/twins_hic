@@ -15,7 +15,13 @@ import argparse
 parser = argparse.ArgumentParser(description='Siamese network')
 parser.add_argument('learning_rate',  type=float,
                     help='a float for the learning rate')
-parser.add_argument('batch_size',  type=int,
+parser.add_argument('--batch_size',  type=int, default=17
+                    help='an int for batch size')
+parser.add_argument('--epoch_training',  type=int, default=30
+                    help='an int for batch size')
+parser.add_argument('--epoch_enforced_training',  type=int, default=0
+                    help='an int for batch size')
+parser.add_argument('--outpath',  type=str, default="outputs/"
                     help='an int for batch size')
 
 args = parser.parse_args()
@@ -45,7 +51,7 @@ dataloader_validation = DataLoader(Siamese_validation, batch_size=100, sampler =
 
 # Convolutional neural network (two convolutional layers)
 model=models.SiameseNet().to(cuda)
-model_save_path = 'outputs/Siamese_nodrop_LR'+str(learning_rate)+'.ckpt'
+model_save_path = outpath +'Siamese_nodrop_LR'+str(learning_rate)+'.ckpt'
 torch.save(model.state_dict(),model_save_path)
 
 # Loss and optimizer
@@ -53,7 +59,7 @@ criterion = ContrastiveLoss() #torch.nn.CosineEmbeddingLoss() #
 optimizer = optim.Adagrad(model.parameters())
 
 #  Training
-for epoch in range(30):
+for epoch in range(args.epoch_training):
     running_loss=0.0
     running_validation_loss = 0.0
     for i, data in enumerate(dataloader):
@@ -81,7 +87,7 @@ for epoch in range(30):
 
     print ('Epoch [{}/{}], Loss: {:.4f}'
             .format(epoch+1, i, running_validation_loss/batches_validation ))
-    if (epoch>0):
+    if (epoch>args.epoch_enforced_training):
         prev_validation_loss = min(prev_validation_loss,running_validation_loss)
         if (float(prev_validation_loss) +  0.1 < float(running_validation_loss)):
             break
