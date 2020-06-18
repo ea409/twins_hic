@@ -14,7 +14,9 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Siamese network')
 parser.add_argument('learning_rate',  type=float,
-                    help='an integer for the accumulator')
+                    help='a float for the learning rate')
+parser.add_argument('batch_size',  type=int,
+                    help='an int for batch size')
 
 args = parser.parse_args()
 
@@ -29,9 +31,9 @@ Siamese = GroupedHiCDataset( dataset, reference ='hg19')
 train_sampler = torch.utils.data.RandomSampler(Siamese)
 
 #CNN params.
-batch_size, learning_rate = 17, args.learning_rate
-no_of_batches= np.floor(len(Siamese )/batch_size)
-dataloader = DataLoader(Siamese, batch_size=batch_size, sampler = train_sampler)
+batch_size, learning_rate = args.batch_size, args.learning_rate
+no_of_batches= np.floor(len(Siamese )/args.batch_size)
+dataloader = DataLoader(Siamese, batch_size=args.batch_size, sampler = train_sampler)
 
 #validation
 dataset_validation = [ SiameseHiCDataset([HiCDatasetDec.load(path + "GSE113703_validation_MDM_"+time+"_" + i + "_"+ j + ".mlhic" ) for i in ['mock', 'H5N1-UV','H5N1'] for j in ['r1','r2'] ],
