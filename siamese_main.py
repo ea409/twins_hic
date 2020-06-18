@@ -15,13 +15,13 @@ import argparse
 parser = argparse.ArgumentParser(description='Siamese network')
 parser.add_argument('learning_rate',  type=float,
                     help='a float for the learning rate')
-parser.add_argument('--batch_size',  type=int, default=17
+parser.add_argument('--batch_size',  type=int, default=17,
                     help='an int for batch size')
-parser.add_argument('--epoch_training',  type=int, default=30
+parser.add_argument('--epoch_training',  type=int, default=30,
                     help='an int for batch size')
-parser.add_argument('--epoch_enforced_training',  type=int, default=0
+parser.add_argument('--epoch_enforced_training',  type=int, default=0,
                     help='an int for batch size')
-parser.add_argument('--outpath',  type=str, default="outputs/"
+parser.add_argument('--outpath',  type=str, default="outputs/",
                     help='an int for batch size')
 
 args = parser.parse_args()
