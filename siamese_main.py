@@ -13,6 +13,8 @@ from torch_plus.loss import ContrastiveLoss
 import argparse
 
 parser = argparse.ArgumentParser(description='Siamese network')
+parser.add_argument('model_name',  type=str,
+                    help='a string indicating a model from models')
 parser.add_argument('learning_rate',  type=float,
                     help='a float for the learning rate')
 parser.add_argument('--batch_size',  type=int, default=17,
@@ -50,7 +52,7 @@ batches_validation = np.ceil(len(dataset_validation)/100)
 dataloader_validation = DataLoader(Siamese_validation, batch_size=100, sampler = test_sampler)
 
 # Convolutional neural network (two convolutional layers)
-model=models.SiameseNet().to(cuda)
+model = eval("models."+ args.model_name)().to(cuda)
 model_save_path = args.outpath +'Siamese_nodrop_LR'+str(learning_rate)+'.ckpt'
 torch.save(model.state_dict(),model_save_path)
 
