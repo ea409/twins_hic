@@ -62,7 +62,8 @@ optimizer = optim.Adagrad(model.parameters())
 
 #  Training
 for epoch in range(args.epoch_training):
-    running_loss=0.0
+    #training model
+    running_loss = 0.0
     running_validation_loss = 0.0
     for i, data in enumerate(dataloader):
         input1, input2,  labels = data
@@ -78,7 +79,7 @@ for epoch in range(args.epoch_training):
         if (i+1) % no_of_batches == 0:
             print ('Epoch [{}/{}], Loss: {:.4f}'
             .format(epoch+1, i, running_loss/no_of_batches))
-
+    #obtaining validation loss
     for i, data in enumerate(dataloader_validation):
         input1,  input2, labels = data
         input1, input2 = input1.to(cuda), input2.to(cuda)
@@ -86,7 +87,7 @@ for epoch in range(args.epoch_training):
         output1, output2 = model(input1, input2)
         loss = criterion(output1, output2, labels)
         running_validation_loss += loss.item()
-
+    #evaluating model
     print ('Epoch [{}/{}], Loss: {:.4f}'
             .format(epoch+1, i, running_validation_loss/batches_validation ))
     if (epoch>args.epoch_enforced_training):
@@ -94,7 +95,7 @@ for epoch in range(args.epoch_training):
         if (float(prev_validation_loss) +  0.1 < float(running_validation_loss)):
             break
     else:
-        prev_validation_loss =  running_validation_loss
+        prev_validation_loss = running_validation_loss
 
     torch.save(model.state_dict(), model_save_path)
 
