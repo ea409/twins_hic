@@ -53,7 +53,7 @@ dataloader_validation = DataLoader(Siamese_validation, batch_size=100, sampler =
 
 # Convolutional neural network (two convolutional layers)
 model = eval("models."+ args.model_name)().to(cuda)
-model_save_path = args.outpath +'Siamese_nodrop_LR'+str(learning_rate)+'.ckpt'
+model_save_path = args.outpath + args.model_name +str(learning_rate)+'.ckpt'
 torch.save(model.state_dict(),model_save_path)
 
 # Loss and optimizer
