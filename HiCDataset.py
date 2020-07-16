@@ -7,6 +7,7 @@ from torch.utils.data import Dataset
 from scipy.sparse import csr_matrix
 from frozendict import frozendict
 import cooler
+from reference_dictionaries import reference_genomes
 
 class HiCDataset(Dataset):
     """Hi-C dataset."""
@@ -88,8 +89,9 @@ class HiCDatasetDec(HiCDataset):
 
 class GroupedHiCDataset(HiCDataset):
     """Grouping multiple Hi-C datasets together"""
-    def __init__(self, list_of_HiCDataset = None, reference = 'mm9', resolution=880000, data_res=10000):
-        self.reference, self.resolution, self.data_res = reference, resolution, data_res
+    def __init__(self, list_of_HiCDataset = None, resolution=880000, data_res=10000):
+        #self.reference = reference
+        self.resolution, self.data_res =  resolution, data_res
         self.data,  self.metadata, self.starts, self.files = tuple(), [], [], set()
         if list_of_HiCDataset is not None:
             if not isinstance(list_of_HiCDataset, list): print("list of HiCDataset is not list type") #stop running
@@ -97,7 +99,7 @@ class GroupedHiCDataset(HiCDataset):
 
     def add_data(self, dataset):
         if not isinstance(dataset, HiCDataset): return print("file not HiCDataset")
-        if self.reference != dataset.reference: return print("incorrect reference")
+        #if self.reference != dataset.reference: return print("incorrect reference")
         if self.resolution != dataset.resolution: return print("incorrect resolution")
         if self.data_res != dataset.data_res: return print("data resolutions do not match")
         self.data = self.data + dataset.data
@@ -106,7 +108,7 @@ class GroupedHiCDataset(HiCDataset):
 
 class SiameseHiCDataset(HiCDataset):
     """Paired Hi-C datasets by genomic location."""
-    def __init__(self, list_of_HiCDatasets, sims=(0,1), reference = ['mm9',{'1':197195432,'2':181748087,'3':159599783,'4':155630120,'5':152537259,'6':149517037,'7':152524553,'8':131738871,'9':124076172,'10':129993255,'11':121843856,'12':121257530,'13':120284312, '14':125194864,'15':103494974, '16':98319150,'17':95272651,'18':90772031,'19':61342430}], resolution=880000, stride=8, data_res=10000):
+    def __init__(self, list_of_HiCDatasets, sims=(0,1), reference = reference_genomes["mm9"], resolution=880000, stride=8, data_res=10000):
         self.sims,  self.resolution, self.data_res, self.split_res = sims, resolution, data_res, int(resolution/stride)
         self.reference, self.chromsizes = reference
         self.data =[]
@@ -170,7 +172,7 @@ class HiCDatasetCool(HiCDataset):
 
     def add_chromosome(self, chromosome):
         if (chromosome in self.metadata['chromosomes'].keys()) |  (chromosome[3:] in self.metadata['chromosomes'].keys()): return print('chromosome already loaded')
-        self.data, self.positions = list(self.data), list(self.pcositions)
+        self.data, self.positions = list(self.data), list(self.positions)
         cl_file = cooler.Cooler(self.metadata['filename'])
         self.get_chromosome(cl_file, chromosome)
         self.data, self.positions = tuple(self.data), tuple(self.positions)
@@ -186,7 +188,7 @@ class HiCDatasetCool(HiCDataset):
 
     def make_matrix(self, cl_matrix, start_pos, first):
         image_scp = cl_matrix[start_pos:start_pos+self.pixel_size, start_pos:start_pos+self.pixel_size]
-        if ( sum(sum(np.isnan(image_scp)| image_scp==0 )) > self.pixel_size*self.pixel_size*0.05) : return None
+        if (sum(np.diagonal(np.isnan(image_scp)|(image_scp==0))) > self.pixel_size*0.8) : return None
         image_scp[np.isnan(image_scp)] = 0
         image_scp = image_scp/np.nanmax(image_scp)
         image_scp = np.expand_dims(image_scp, axis=0)
