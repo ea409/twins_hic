@@ -126,8 +126,8 @@ class SiameseHiCDataset(HiCDataset):
             if not isinstance(data, HiCDataset):
                 print("List of HiCDatasets need to be a list containing only HiCDataset objects.")
                 return False
-            if (data.metadata['filename'], data.metadata['norm']) in filenames_norm:
-                print("file has been passed twice with the same normalisation") #maybe make this a warning instead of not doing it
+            # if (data.metadata['filename'], data.metadata['norm']) in filenames_norm:
+            #     print("file has been passed twice with the same normalisation") #maybe make this a warning instead of not doing it
             filenames_norm.add((data.metadata['filename'], data.metadata['norm']))
         return True
 
