@@ -68,28 +68,28 @@ class SAlexNet(nn.Module):
         super(SAlexNet, self).__init__()
         self.features = nn.Sequential(
             nn.Conv2d(1, 96, 11, 4),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.LocalResponseNorm(size=5, alpha=0.0001, beta=0.75, k=2),
             nn.MaxPool2d(kernel_size=3, stride=2),
             nn.Conv2d(96, 256, 5, padding=2),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.LocalResponseNorm(size=5, alpha=0.0001, beta=0.75, k=2),
             nn.MaxPool2d(kernel_size=3, stride=2),
             nn.Conv2d(256, 384, 3, padding=1),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Conv2d(384, 384, 3, padding=1),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Conv2d(384, 256, 3, padding=1),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.MaxPool2d(kernel_size=3, stride=2),
         )
         self.linear = nn.Sequential(
             nn.Dropout(p=0.5, inplace=True),
             nn.Linear(in_features=(256 * 1 * 1), out_features=4096),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Dropout(p=0.5, inplace=True),
             nn.Linear(in_features=4096, out_features=4096),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(in_features=4096, out_features=83),
         )
         self.distance = nn.CosineSimilarity()
