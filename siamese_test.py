@@ -39,9 +39,9 @@ def test_model(model, dataloader):
         labe = label.type(torch.FloatTensor).to(cuda)
         output1, output2 = model(input1, input2)
         predicted = F.pairwise_distance(output1,output2)
-        distances = np.concatenate((distances, predicted.detach().numpy()))
+        distances = np.concatenate((distances, predicted.cpu().detach().numpy()))
         label = label.type(torch.FloatTensor)
-        labels  = np.concatenate((labels, label.detach().numpy()))
+        labels  = np.concatenate((labels, label.cpu().detach().numpy()))
     return distances, labels
 
 cuda = torch.device("cuda:0")
