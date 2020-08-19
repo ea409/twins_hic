@@ -28,7 +28,9 @@ parser.add_argument('--epoch_training',  type=int, default=30,
 parser.add_argument('--epoch_enforced_training',  type=int, default=0,
                     help='an int for batch size')
 parser.add_argument('--outpath',  type=str, default="outputs/",
-                    help='an int for batch size')
+                    help='a path for the output directory')
+parser.add_argument('--seed',  type=int, default=30004,
+                    help='an int for the seed')
 parser.add_argument("data_inputs", nargs='+',help="keys from dictionary containing paths for training and validation sets.")
 
 args = parser.parse_args()
@@ -37,6 +39,8 @@ cuda = torch.device("cuda:0")
 
 with open(args.json_file) as json_file:
     dataset = json.load(json_file)
+
+torch.manual_seed(args.seed)
 
 #dataset all about
 Siamese = GroupedHiCDataset([ SiameseHiCDataset([HiCDatasetDec.load(data_path) for data_path in dataset[data_name]["training"]],
@@ -57,7 +61,7 @@ dataloader_validation = DataLoader(Siamese_validation, batch_size=100, sampler =
 
 # Convolutional neural network (two convolutional layers)
 model = eval("models."+ args.model_name)().to(cuda)
-model_save_path = args.outpath + args.model_name +str(learning_rate)+'.ckpt'
+model_save_path = args.outpath + args.model_name +str(learning_rate) +'_' + str(args.seed) +'.ckpt'
 torch.save(model.state_dict(),model_save_path)
 
 # Loss and optimizer

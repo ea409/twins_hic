@@ -28,6 +28,8 @@ args = parser.parse_args()
 with open(args.json_file) as json_file:
     dataset = json.load(json_file)
 
+
+
 def test_model(model, dataloader):
     distances = np.array([])
     labels = np.array([])
@@ -41,8 +43,8 @@ def test_model(model, dataloader):
     return distances, labels
 
 cuda = torch.device("cuda:0")
-model = eval("models."+ args.model_name)()#.to(cuda)
-model.load_state_dict(torch.load(args.model_infile, map_location=torch.device('cpu')))
+model = eval("models."+ args.model_name)().to(cuda)
+model.load_state_dict(torch.load(args.model_infile))
 model.eval()
 
 #dataset all
