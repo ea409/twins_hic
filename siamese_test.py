@@ -36,7 +36,7 @@ def test_model(model, dataloader):
     for _, data in enumerate(dataloader):
         input1, input2, label = data
         input1, input2 = input1.to(cuda), input2.to(cuda)
-        labe = label.type(torch.FloatTensor).to(cuda)
+        labels = label.type(torch.FloatTensor).to(cuda)
         output1, output2 = model(input1, input2)
         predicted = F.pairwise_distance(output1,output2)
         distances = np.concatenate((distances, predicted.cpu().detach().numpy()))
