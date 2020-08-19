@@ -59,7 +59,7 @@ dataloader = DataLoader(Siamese, batch_size=100, sampler = test_sampler)
 distances, labels = test_model(model, dataloader)
 
 mx = max(distances)
-mn = 0.01
+mn = min(distances[distances>0])
 rng = np.arange(mn, mx, (mx-mn)/200)
 
 a = plt.hist(distances[(labels==0)],bins=rng, density=True, label='technical replicates')
