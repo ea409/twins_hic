@@ -43,20 +43,18 @@ class SLeNet(nn.Module):
             nn.MaxPool2d(2, stride=2),
         )
         self.linear = nn.Sequential(
-            nn.Linear(16*19*19, 120),
-            nn.ReLU(True),
+            nn.Linear(16*61*61, 120),
+            nn.GeLU(True),
             #nn.Dropout(),
             nn.Linear(120, 83),
-            nn.ReLU(True),
+            nn.GeLU(True),
             )
         self.distance = nn.CosineSimilarity()
-
     def forward_one(self, x):
         x = self.features(x)
         x = x.view(x.size()[0], -1)
         x = self.linear(x)
         return x
-
     def forward(self, x1, x2):
         out1 = self.forward_one(x1)
         out2 = self.forward_one(x2)
@@ -68,38 +66,36 @@ class SAlexNet(nn.Module):
         super(SAlexNet, self).__init__()
         self.features = nn.Sequential(
             nn.Conv2d(1, 96, 11, 4),
-            nn.LeakyReLU(),
+            nn.GeLU(),
             nn.LocalResponseNorm(size=5, alpha=0.0001, beta=0.75, k=2),
             nn.MaxPool2d(kernel_size=3, stride=2),
             nn.Conv2d(96, 256, 5, padding=2),
-            nn.LeakyReLU(),
+            nn.GeLU(),
             nn.LocalResponseNorm(size=5, alpha=0.0001, beta=0.75, k=2),
             nn.MaxPool2d(kernel_size=3, stride=2),
             nn.Conv2d(256, 384, 3, padding=1),
-            nn.LeakyReLU(),
+            nn.GeLU(),
             nn.Conv2d(384, 384, 3, padding=1),
-            nn.LeakyReLU(),
+            nn.GeLU(),
             nn.Conv2d(384, 256, 3, padding=1),
-            nn.LeakyReLU(),
+            nn.GeLU(),
             nn.MaxPool2d(kernel_size=3, stride=2),
         )
         self.linear = nn.Sequential(
             nn.Dropout(p=0.5, inplace=True),
-            nn.Linear(in_features=(256 * 1 * 1), out_features=4096),
-            nn.LeakyReLU(),
+            nn.Linear(in_features=(256 * 6 * 6), out_features=4096),
+            nn.GeLU(),
             nn.Dropout(p=0.5, inplace=True),
             nn.Linear(in_features=4096, out_features=4096),
-            nn.LeakyReLU(),
+            nn.GeLU(),
             nn.Linear(in_features=4096, out_features=83),
         )
         self.distance = nn.CosineSimilarity()
-
     def forward_one(self, x):
         x = self.features(x)
         x = x.view(x.size()[0], -1)
         x = self.linear(x)
         return x
-
     def forward(self, x1, x2):
         out1 = self.forward_one(x1)
         out2 = self.forward_one(x2)
@@ -122,7 +118,7 @@ class SZFNet(nn.Module):
         nn.init.normal_(layer.weight, mean=0.0, std=0.02)
         nn.init.constant_(layer.bias, 0.0)
         layers.append(layer)
-        layers.append(nn.ReLU(inplace=True))
+        layers.append(nn.GeLU(inplace=True))
         layers.append(nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
         layers.append(nn.LocalResponseNorm(5))
         # in_channels = 96, out_channels = 256
@@ -131,7 +127,7 @@ class SZFNet(nn.Module):
         nn.init.normal_(layer.weight, mean=0.0, std=0.02)
         nn.init.constant_(layer.bias, 0.0)
         layers.append(layer)
-        layers.append(nn.ReLU(inplace=True))
+        layers.append(nn.GeLU(inplace=True))
         layers.append(nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
         layers.append(nn.LocalResponseNorm(5))
         # in_channels = 256, out_channels = 384
@@ -140,28 +136,28 @@ class SZFNet(nn.Module):
         nn.init.normal_(layer.weight, mean=0.0, std=0.02)
         nn.init.constant_(layer.bias, 0.0)
         layers.append(layer)
-        layers.append(nn.ReLU(inplace=True))
+        layers.append(nn.GeLU(inplace=True))
         # in_channels = 384, out_channels = 384
         # kernel_size = 3x3, stride = 1
         layer = nn.Conv2d(384, 384, kernel_size=3, stride=1, padding=1)
         nn.init.normal_(layer.weight, mean=0.0, std=0.02)
         nn.init.constant_(layer.bias, 0.0)
         layers.append(layer)
-        layers.append(nn.ReLU(inplace=True))
+        layers.append(nn.GeLU(inplace=True))
         # in_channels = 384, out_channels = 256
         # kernel_size = 3x3, stride = 1
         layer = nn.Conv2d(384, 256, kernel_size=3, stride=1, padding=1)
         nn.init.normal_(layer.weight, mean=0.0, std=0.02)
         nn.init.constant_(layer.bias, 0.0)
         layers.append(layer)
-        layers.append(nn.ReLU(inplace=True))
+        layers.append(nn.GeLU(inplace=True))
         layers.append(nn.MaxPool2d(kernel_size=3, stride=2))
         return nn.Sequential(*layers)
     def get_fc_net(self):
         layers = []
         # in_channels = 9216 -> output of self.conv_net
         # out_channels = 4096
-        layer = nn.Linear(256*2*2, 4096)
+        layer = nn.Linear(256*7*7, 4096)
         nn.init.normal_(layer.weight, mean=0.0, std=0.02)
         nn.init.constant_(layer.bias, 0.0)
         layers.append(layer)
@@ -176,7 +172,7 @@ class SZFNet(nn.Module):
         return nn.Sequential(*layers)
     def forward_one(self, x):
         y = self.conv_net(x)
-        y = y.view(-1, 2*2*256)
+        y = y.view(-1, 7*7*256)
         y = self.fc_net(y)
         return y
     def forward(self, x1, x2):
