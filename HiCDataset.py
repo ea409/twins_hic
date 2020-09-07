@@ -77,7 +77,7 @@ class HiCDatasetDec(HiCDataset):
 
     def make_matrix(self, straw_matrix, start_pos, end_pos, chromosome):
         xpos, ypos, vals = straw_matrix.getDataFromGenomeRegion(start_pos, end_pos, start_pos, end_pos)
-        if (len(set(xpos))<self.pixel_size*0.8) |  (np.sum(np.isnan(vals)) > 0.5*len(vals)) : return None
+        if (len(set(xpos))<self.pixel_size*0.9) |  (np.sum(np.isnan(vals)) > 0.5*len(vals)) : return None
         xpos, ypos = np.array(xpos)-start_pos/straw_matrix.binsize, np.array(ypos)-start_pos/straw_matrix.binsize
         image_scp = csr_matrix( (vals, (xpos, ypos) ), shape=(self.pixel_size,self.pixel_size) ).toarray()
         image_scp[np.isnan(image_scp)] = 0
@@ -89,7 +89,7 @@ class HiCDatasetDec(HiCDataset):
 
 class GroupedHiCDataset(HiCDataset):
     """Grouping multiple Hi-C datasets together"""
-    def __init__(self, list_of_HiCDataset = None, resolution=880000, data_res=10000):
+    def __init__(self, list_of_HiCDataset = None, resolution=2560000, data_res=10000):
         #self.reference = reference
         self.resolution, self.data_res =  resolution, data_res
         self.data,  self.metadata, self.starts, self.files = tuple(), [], [], set()
@@ -108,7 +108,7 @@ class GroupedHiCDataset(HiCDataset):
 
 class SiameseHiCDataset(HiCDataset):
     """Paired Hi-C datasets by genomic location."""
-    def __init__(self, list_of_HiCDatasets, sims=(0,1), reference = reference_genomes["mm9"], resolution=880000, stride=8, data_res=10000):
+    def __init__(self, list_of_HiCDatasets, sims=(0,1), reference = reference_genomes["mm9"], resolution=2560000, stride=16, data_res=10000):
         self.sims,  self.resolution, self.data_res, self.split_res = sims, resolution, data_res, int(resolution/stride)
         self.reference, self.chromsizes = reference
         self.data =[]
@@ -188,7 +188,7 @@ class HiCDatasetCool(HiCDataset):
 
     def make_matrix(self, cl_matrix, start_pos, first):
         image_scp = cl_matrix[start_pos:start_pos+self.pixel_size, start_pos:start_pos+self.pixel_size]
-        if (sum(np.diagonal(np.isnan(image_scp)|(image_scp==0))) > self.pixel_size*0.8) : return None
+        if (sum(np.diagonal(np.isnan(image_scp)|(image_scp==0))) > self.pixel_size*0.9) : return None
         image_scp[np.isnan(image_scp)] = 0
         image_scp = image_scp/np.nanmax(image_scp)
         image_scp = np.expand_dims(image_scp, axis=0)
