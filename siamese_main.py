@@ -35,7 +35,7 @@ parser.add_argument("data_inputs", nargs='+',help="keys from dictionary containi
 
 args = parser.parse_args()
 
-cuda = torch.device("cuda:0")
+cuda = torch.device("cuda")
 
 with open(args.json_file) as json_file:
     dataset = json.load(json_file)
