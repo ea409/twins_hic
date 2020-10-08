@@ -24,9 +24,9 @@ parser.add_argument('learning_rate',  type=float,
 parser.add_argument('--batch_size',  type=int, default=17,
                     help='an int for batch size')
 parser.add_argument('--epoch_training',  type=int, default=30,
-                    help='an int for batch size')
+                    help='an int for no of epochs training can go on for')
 parser.add_argument('--epoch_enforced_training',  type=int, default=0,
-                    help='an int for batch size')
+                    help='an int for number of epochs to force training for')
 parser.add_argument('--outpath',  type=str, default="outputs/",
                     help='a path for the output directory')
 parser.add_argument('--seed',  type=int, default=30004,
@@ -100,7 +100,7 @@ for epoch in range(args.epoch_training):
             .format(epoch+1, i, running_validation_loss/batches_validation ))
     if (epoch>args.epoch_enforced_training):
         prev_validation_loss = min(prev_validation_loss,running_validation_loss)
-        if (float(prev_validation_loss) +  0.1 < float(running_validation_loss)):
+        if (float(prev_validation_loss) < 1.1*float(running_validation_loss)):
             break
     else:
         prev_validation_loss = running_validation_loss

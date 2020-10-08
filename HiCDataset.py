@@ -134,6 +134,10 @@ class SiameseHiCDataset(HiCDataset):
     def check_input_parameters(self, dataset): #where we check if the dataset is compatible with what we want to do
         pass
 
+    def append_data(self, curr_data, pos):
+        self.data.extend([(curr_data[k][0], curr_data[j][0], (self.sims[0] if curr_data[k][1] == curr_data[j][1] else self.sims[1]) ) for k in range(0,len(curr_data)) for j in range(k+1,len(curr_data))])
+        self.positions.extend( [(pos, k, j) for k in range(0,len(curr_data)) for j in range(k+1,len(curr_data))])
+
     def make_data(self, list_of_HiCDatasets):
         datasets = len(list_of_HiCDatasets)
         for chrom in self.chromsizes.keys():
@@ -149,8 +153,7 @@ class SiameseHiCDataset(HiCDataset):
                     if positions[i][-1:]!=[pos]: continue
                     curr_data.append(list_of_HiCDatasets[i][starts[i]+len(positions[i])-1] )
                     positions[i].pop()
-                self.data.extend([(curr_data[k][0], curr_data[j][0], (self.sims[0] if curr_data[k][1] == curr_data[j][1] else self.sims[1]) ) for k in range(0,len(curr_data)) for j in range(k+1,len(curr_data))])
-                self.positions.extend( [(pos, k, j) for k in range(0,len(curr_data)) for j in range(k+1,len(curr_data))])
+                self.add_data(curr_data, pos)
             self.chromosomes[chrom] =(start_index,len(self.positions))
         self.data = tuple(self.data)
 
@@ -196,3 +199,32 @@ class HiCDatasetCool(HiCDataset):
         self.data.append((image_scp, self.metadata['class_id']))
         self.positions.append( int(self.data_res*(start_pos-first)))
 
+
+class metriclearnpaired_HiCDataset(SiameseHiCDataset):
+    """Paired Hi-C datasets by genomic location."""
+    def __init__(self, *args, **kwargs):
+        self.labels =[]
+        super(metriclearnpaired_HiCDataset, self).__init__( *args, **kwargs)
+
+    def append_data(self, curr_data, pos):
+        for k in range(0,len(curr_data)):
+            for j in range(k+1,len(curr_data)):
+                x1, x2 = curr_data[k][0].numpy(), curr_data[j][0].numpy()
+                x1, x2 = x1.flatten(), x2.flatten()
+                self.data.extend(  [ np.vstack((x1,x2))] )
+                self.labels.extend( [ self.sims[0] if curr_data[k][1] == curr_data[j][1] else self.sims[1] ] )
+                self.positions.extend( (pos, k, j) )
+
+class SSIM_HiCDataset(SiameseHiCDataset):
+    """Paired Hi-C datasets by genomic location."""
+    def __init__(self, *args, **kwargs):
+        self.labels =[]
+        super(SSIM_HiCDataset, self).__init__( *args, **kwargs)
+
+    def append_data(self, curr_data, pos):
+        for k in range(0,len(curr_data)):
+            for j in range(k+1,len(curr_data)):
+                x1, x2 = curr_data[k][0][0].numpy(), curr_data[j][0][0].numpy()
+                self.data.extend(  [  (x1, x2) ] )
+                self.labels.extend( [ self.sims[0] if curr_data[k][1] == curr_data[j][1] else self.sims[1] ] )
+                self.positions.extend( (pos, k, j) )

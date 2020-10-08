@@ -62,8 +62,8 @@ mx = max(distances)
 mn = min(distances[distances>0])
 rng = np.arange(mn, mx, (mx-mn)/200)
 
-a = plt.hist(distances[(labels==0)],bins=rng,  density=True, label='technical replicates')
-b = plt.hist(distances[(labels==1)],bins=rng, density=True, label='biological conditions')
+a = plt.hist(distances[(labels==0)],bins=rng,  density=True, label='technical replicates', alpha=0.5)
+b = plt.hist(distances[(labels==1)],bins=rng, density=True, label='biological conditions', alpha=0.5)
 intersect = a[1][np.argwhere(np.diff(np.sign(a[0]-b[0])))[0]]
 plt.axvline(intersect, color='k')
 plt.xticks(np.arange(0,np.ceil(mx), 1))
