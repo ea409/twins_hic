@@ -153,7 +153,7 @@ class SiameseHiCDataset(HiCDataset):
                     if positions[i][-1:]!=[pos]: continue
                     curr_data.append(list_of_HiCDatasets[i][starts[i]+len(positions[i])-1] )
                     positions[i].pop()
-                self.add_data(curr_data, pos)
+                self.append_data(curr_data, pos)
             self.chromosomes[chrom] =(start_index,len(self.positions))
         self.data = tuple(self.data)
 
