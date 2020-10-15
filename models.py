@@ -44,10 +44,10 @@ class SLeNet(nn.Module):
         )
         self.linear = nn.Sequential(
             nn.Linear(16*61*61, 120),
-            nn.GELU(True),
+            nn.GELU(),
             #nn.Dropout(),
             nn.Linear(120, 83),
-            nn.GELU(True),
+            nn.GELU(),
             )
         self.distance = nn.CosineSimilarity()
     def forward_one(self, x):

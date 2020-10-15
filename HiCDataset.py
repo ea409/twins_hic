@@ -8,6 +8,7 @@ from scipy.sparse import csr_matrix
 from frozendict import frozendict
 import cooler
 from reference_dictionaries import reference_genomes
+from skimage.metrics import structural_similarity as ssim
 
 class HiCDataset(Dataset):
     """Hi-C dataset."""
@@ -228,3 +229,7 @@ class SSIM_HiCDataset(SiameseHiCDataset):
                 self.data.extend(  [  (x1, x2) ] )
                 self.labels.extend( [ self.sims[0] if curr_data[k][1] == curr_data[j][1] else self.sims[1] ] )
                 self.positions.extend( (pos, k, j) )
+
+    def calculate_ssim(self):
+        SSIM=[1-ssim(data[0], data[1]) for data in self.data ]
+        return SSIM
