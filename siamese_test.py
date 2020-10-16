@@ -90,8 +90,8 @@ BC_rate = sum((distances>intersect) & (labels==1) )/sum(labels==1)
 print('global rate: {:.4f}, technical replicate rate: {:.4f}, biological condition rate: {:.4f}'
             .format(global_rate, TR_rate, BC_rate))
 
-a = plt.hist(distances[(labels==0)],bins=rng, density=True, label='technical replicates')
-b = plt.hist(distances[(labels==1)],bins=rng, density=True, label='biological conditions')
+a = plt.hist(distances[(labels==0)],bins=rng, density=True, label='technical replicates', alpha=0.5)
+b = plt.hist(distances[(labels==1)],bins=rng, density=True, label='biological conditions', alpha=0.5)
 plt.axvline(intersect, color='k')
 plt.xticks(np.arange(0,np.ceil(mx), 1))
 plt.title("distance of test from " + args.model_infile.split("/")[-1] +" on: "+ ", ".join(args.data_inputs))
