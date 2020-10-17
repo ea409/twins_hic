@@ -44,9 +44,11 @@ class SLeNet(nn.Module):
         )
         self.linear = nn.Sequential(
             nn.Linear(16*61*61, 120),
+            nn.SyncBatchNorm(),
             nn.GELU(),
-            nn.Dropout(),
+            #nn.Dropout(),
             nn.Linear(120, 83),
+            nn.SyncBatchNorm(),
             nn.GELU(),
             )
         self.distance = nn.CosineSimilarity()
