@@ -44,11 +44,9 @@ class SLeNet(nn.Module):
         )
         self.linear = nn.Sequential(
             nn.Linear(16*61*61, 120),
-            nn.SyncBatchNorm(),
             nn.GELU(),
             #nn.Dropout(),
             nn.Linear(120, 83),
-            nn.SyncBatchNorm(),
             nn.GELU(),
             )
         self.distance = nn.CosineSimilarity()
@@ -84,10 +82,10 @@ class SAlexNet(nn.Module):
             nn.MaxPool2d(kernel_size=3, stride=2),
         )
         self.linear = nn.Sequential(
-            nn.Dropout(p=0.5, inplace=True),
+            #nn.Dropout(p=0.5, inplace=True),
             nn.Linear(in_features=(256 * 6 * 6), out_features=4096),
             nn.GELU(),
-            nn.Dropout(p=0.5, inplace=True),
+            #nn.Dropout(p=0.5, inplace=True),
             nn.Linear(in_features=4096, out_features=4096),
             nn.GELU(),
             nn.Linear(in_features=4096, out_features=83),
