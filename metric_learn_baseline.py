@@ -20,7 +20,7 @@ with open(args.json_file) as json_file:
 
 data = [HiCDatasetDec.load(data_path) for data_path in dataset[args.data_name]["training"]]
 
-mt = metriclearnpaired_HiCDataset(data, reference = reference_genomes[dataset[args.data_name]["reference"]], sims = [1,-1], resolution=880000, stride=4)
+mt = metriclearnpaired_HiCDataset(data, reference = reference_genomes[dataset[args.data_name]["reference"]], sims = [1,-1])
 x= np.array(mt)
 y= np.array(mt.labels)
 
