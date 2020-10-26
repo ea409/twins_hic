@@ -109,14 +109,15 @@ class GroupedHiCDataset(HiCDataset):
 
 class SiameseHiCDataset(HiCDataset):
     """Paired Hi-C datasets by genomic location."""
-    def __init__(self, list_of_HiCDatasets, sims=(0,1), reference = reference_genomes["mm9"], resolution=2560000, stride=16, data_res=10000):
-        self.sims,  self.resolution, self.data_res, self.split_res = sims, resolution, data_res, int(resolution/stride)
+    def __init__(self, list_of_HiCDatasets, sims=(0,1), reference = reference_genomes["mm9"]):
+        self.sims = sims
         self.reference, self.chromsizes = reference
         self.data =[]
         self.positions =[]
         self.chromosomes = OrderedDict()
         checks = self.check_input(list_of_HiCDatasets)
         if not checks: return None
+        self.resolution, self.data_res, self.split_res = list_of_HiCDatasets[0].resolution, list_of_HiCDatasets[0].data_res, list_of_HiCDatasets[0].split_res
         self.make_data(list_of_HiCDatasets)
         self.metadata = tuple([data.metadata for data in list_of_HiCDatasets])
 
