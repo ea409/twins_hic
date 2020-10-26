@@ -90,12 +90,12 @@ class HiCDatasetDec(HiCDataset):
 
 class GroupedHiCDataset(HiCDataset):
     """Grouping multiple Hi-C datasets together"""
-    def __init__(self, list_of_HiCDataset = None, resolution=2560000, data_res=10000):
+    def __init__(self, list_of_HiCDataset = None):
         #self.reference = reference
-        self.resolution, self.data_res =  resolution, data_res
         self.data,  self.metadata, self.starts, self.files = tuple(), [], [], set()
         if list_of_HiCDataset is not None:
             if not isinstance(list_of_HiCDataset, list): print("list of HiCDataset is not list type") #stop running
+            self.resolution, self.data_res = list_of_HiCDatasets[0].resolution, list_of_HiCDatasets[0].data_res
             for dataset in list_of_HiCDataset: self.add_data(dataset)
 
     def add_data(self, dataset):

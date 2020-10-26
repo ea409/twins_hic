@@ -118,7 +118,7 @@ class SZFNet(nn.Module):
         nn.init.normal_(layer.weight, mean=0.0, std=0.02)
         nn.init.constant_(layer.bias, 0.0)
         layers.append(layer)
-        layers.append(nn.GELU(inplace=True))
+        layers.append(nn.GELU())
         layers.append(nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
         layers.append(nn.LocalResponseNorm(5))
         # in_channels = 96, out_channels = 256
@@ -127,7 +127,7 @@ class SZFNet(nn.Module):
         nn.init.normal_(layer.weight, mean=0.0, std=0.02)
         nn.init.constant_(layer.bias, 0.0)
         layers.append(layer)
-        layers.append(nn.GELU(inplace=True))
+        layers.append(nn.GELU())
         layers.append(nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
         layers.append(nn.LocalResponseNorm(5))
         # in_channels = 256, out_channels = 384
@@ -136,21 +136,21 @@ class SZFNet(nn.Module):
         nn.init.normal_(layer.weight, mean=0.0, std=0.02)
         nn.init.constant_(layer.bias, 0.0)
         layers.append(layer)
-        layers.append(nn.GELU(inplace=True))
+        layers.append(nn.GELU())
         # in_channels = 384, out_channels = 384
         # kernel_size = 3x3, stride = 1
         layer = nn.Conv2d(384, 384, kernel_size=3, stride=1, padding=1)
         nn.init.normal_(layer.weight, mean=0.0, std=0.02)
         nn.init.constant_(layer.bias, 0.0)
         layers.append(layer)
-        layers.append(nn.GELU(inplace=True))
+        layers.append(nn.GELU())
         # in_channels = 384, out_channels = 256
         # kernel_size = 3x3, stride = 1
         layer = nn.Conv2d(384, 256, kernel_size=3, stride=1, padding=1)
         nn.init.normal_(layer.weight, mean=0.0, std=0.02)
         nn.init.constant_(layer.bias, 0.0)
         layers.append(layer)
-        layers.append(nn.GELU(inplace=True))
+        layers.append(nn.GELU())
         layers.append(nn.MaxPool2d(kernel_size=3, stride=2))
         return nn.Sequential(*layers)
     def get_fc_net(self):
