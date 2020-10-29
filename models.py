@@ -7,40 +7,26 @@ import numpy as np
 #or x is the CTCFKO and f(x) is the DKO
 
 class SiameseNet(nn.Module):
-    def __init__(self):
-        super(SiameseNet, self).__init__()
-        self.features = nn.Sequential(
-            nn.Conv2d(1, 20, 5),
-            nn.MaxPool2d(2, 2),
-            nn.Conv2d(20, 16, 5),
-            nn.MaxPool2d(2, 2),
-        )
-        self.linear = nn.Sequential(
-            nn.Linear(16*19*19, 120),
-            nn.ReLU(True),
-            #nn.Dropout(),
-            nn.Linear(120, 20),
-            nn.ReLU(True),
-            )
-        self.distance = nn.CosineSimilarity()
-    def forward_one(self, x):
-        x = self.features(x)
-        x = x.view(x.size()[0], -1)
-        x = self.linear(x)
-        return x
-    def forward(self, x1, x2):
-        out1 = self.forward_one(x1)
-        out2 = self.forward_one(x2)
-        #out = self.distance(out1, out2)
-        return out1, out2
-
-class SLeNet(nn.Module):
     def __init__(self, mask=False):
-        super(SLeNet, self).__init__()
+        super(SiameseNet, self).__init__()
         if mask:
             mask = np.ones((256, 256), int)
             np.fill_diagonal(mask, 0)
             self.mask = torch.tensor([mask])
+    def mask_data(x):
+        if hasattr(self, "mask"): x=self.mask*x
+        return x
+    def forward_one(self, x):
+        raise NotImplementedError
+    def forward(self, x1, x2):
+        x1, x2 = self.mask_data(x1), self.mask_data(x2)
+        out1 = self.forward_one(x1)
+        out2 = self.forward_one(x2)
+        return out1, out2
+
+class SLeNet(SiameseNet):
+    def __init__(self, *args, **kwargs):
+        super(SLeNet, self).__init__(*args, **kwargs)
         self.features = nn.Sequential(
             nn.Conv2d(1, 6, 5, 1),
             nn.MaxPool2d(2, stride=2),
@@ -56,20 +42,14 @@ class SLeNet(nn.Module):
             )
         self.distance = nn.CosineSimilarity()
     def forward_one(self, x):
-        if hasattr(self, "mask"): x=self.mask*x
         x = self.features(x)
         x = x.view(x.size()[0], -1)
         x = self.linear(x)
         return x
-    def forward(self, x1, x2):
-        out1 = self.forward_one(x1)
-        out2 = self.forward_one(x2)
-        #out = self.distance(out1, out2)
-        return out1, out2
 
-class SAlexNet(nn.Module):
-    def __init__(self,mask=False):
-        super(SAlexNet, self).__init__()
+class SAlexNet(SiameseNet):
+    def __init__(self, *args, **kwargs):
+        super(SAlexNet, self).__init__(*args, **kwargs)
         self.features = nn.Sequential(
             nn.Conv2d(1, 96, 11, 4),
             nn.GELU(),
@@ -102,16 +82,10 @@ class SAlexNet(nn.Module):
         x = x.view(x.size()[0], -1)
         x = self.linear(x)
         return x
-    def forward(self, x1, x2):
-        out1 = self.forward_one(x1)
-        out2 = self.forward_one(x2)
-        #out = self.distance(out1, out2)
-        return out1, out2
 
-
-class SZFNet(nn.Module):
-    def __init__(self,mask=False):
-        super(SZFNet, self).__init__()
+class SZFNet(SiameseNet):
+    def __init__(self, *args, **kwargs):
+        super(SZFNet, self).__init__(*args, **kwargs)
         self.channels = 1
         self.conv_net = self.get_conv_net()
         self.fc_net = self.get_fc_net()
@@ -181,9 +155,3 @@ class SZFNet(nn.Module):
         y = y.view(-1, 7*7*256)
         y = self.fc_net(y)
         return y
-    def forward(self, x1, x2):
-        out1 = self.forward_one(x1)
-        out2 = self.forward_one(x2)
-        #out = self.distance(out1, out2)
-        return out1, out2
-
