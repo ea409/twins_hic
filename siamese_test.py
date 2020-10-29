@@ -1,13 +1,11 @@
 import numpy as np
 from torch.utils.data import Dataset, DataLoader, SequentialSampler
-from torch.autograd import Variable
 import torch.nn.functional as F
 import torch.nn as nn
 #from torch_plus import additional_samplers
 from HiCDataset import  HiCDatasetDec, SiameseHiCDataset,GroupedHiCDataset
 import models
 import torch
-from torch_plus.loss import ContrastiveLoss
 import matplotlib.pyplot as plt
 import argparse
 from reference_dictionaries import reference_genomes
@@ -20,6 +18,8 @@ parser.add_argument('json_file',  type=str,
                     help='a file location for the json dictionary containing file paths')
 parser.add_argument('model_infile',  type=str,
                     help='a string indicating the model location file')
+parser.add_argument('--mask',  type=bool, default=False,
+                    help='an argument specifying if the diagonal should be masked')
 parser.add_argument("data_inputs", nargs='+',help="keys from dictionary containing paths for training and validation sets.")
 
 args = parser.parse_args()
@@ -45,7 +45,7 @@ def test_model(model, dataloader):
     return distances, labels
 
 cuda = torch.device("cuda:0")
-model = eval("models."+ args.model_name)().to(cuda)
+model = eval("models."+ args.model_name)(mask=args.mask).to(cuda)
 model.load_state_dict(torch.load(args.model_infile))
 model.eval()
 
