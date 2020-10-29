@@ -12,9 +12,9 @@ class SiameseNet(nn.Module):
         if mask:
             mask = np.ones((256, 256), int)
             np.fill_diagonal(mask, 0)
-            self.mask = torch.tensor([mask])
-    def mask_data(x):
-        if hasattr(self, "mask"): x=self.mask*x
+            self.mask = nn.Parameter(torch.tensor([mask]), requires_grad = False)
+    def mask_data(self, x):
+        if hasattr(self, "mask"): x=torch.mul(self.mask, x)
         return x
     def forward_one(self, x):
         raise NotImplementedError
