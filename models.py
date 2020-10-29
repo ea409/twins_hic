@@ -10,8 +10,7 @@ class SiameseNet(nn.Module):
     def __init__(self, mask=False):
         super(SiameseNet, self).__init__()
         if mask:
-            mask = np.ones((256, 256), int)
-            np.fill_diagonal(mask, 0)
+            mask = np.tril(np.ones(256), k=-3)+np.triu(np.ones(256), k=3)
             self.mask = nn.Parameter(torch.tensor([mask]), requires_grad = False)
     def mask_data(self, x):
         if hasattr(self, "mask"): x=torch.mul(self.mask, x)
