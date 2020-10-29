@@ -68,7 +68,7 @@ class SLeNet(nn.Module):
         return out1, out2
 
 class SAlexNet(nn.Module):
-    def __init__(self):
+    def __init__(self,mask=False):
         super(SAlexNet, self).__init__()
         self.features = nn.Sequential(
             nn.Conv2d(1, 96, 11, 4),
@@ -109,7 +109,7 @@ class SAlexNet(nn.Module):
         return out1, out2
 
 
-class SZFNet(nn.Module):
+class SZFNet(nn.Module,mask=False):
     def __init__(self):
         super(SZFNet, self).__init__()
         self.channels = 1

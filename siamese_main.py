@@ -31,6 +31,8 @@ parser.add_argument('--outpath',  type=str, default="outputs/",
                     help='a path for the output directory')
 parser.add_argument('--seed',  type=int, default=30004,
                     help='an int for the seed')
+parser.add_argument('--mask',  type=bool, default=False,
+                    help='an argument specifying if the diagonal should be masked')
 parser.add_argument("data_inputs", nargs='+',help="keys from dictionary containing paths for training and validation sets.")
 
 args = parser.parse_args()
@@ -60,7 +62,7 @@ batches_validation = np.ceil(len(Siamese_validation)/100)
 dataloader_validation = DataLoader(Siamese_validation, batch_size=100, sampler = test_sampler)
 
 # Convolutional neural network (two convolutional layers)
-model = eval("models."+ args.model_name)().to(cuda)
+model = eval("models."+ args.model_name)(mask=args.mask).to(cuda)
 model_save_path = args.outpath + args.model_name  +'_' + str(learning_rate) +'_'+ str(batch_size)+'_' + str(args.seed) +'.ckpt'
 torch.save(model.state_dict(),model_save_path)
 
