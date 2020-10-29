@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
+import numpy as np
 
 #learn f(x) such that x is the wt and f(x) is the CTCFKO - then i have to clean and label in a different way.
 #or x is the CTCFKO and f(x) is the DKO
@@ -34,8 +35,12 @@ class SiameseNet(nn.Module):
         return out1, out2
 
 class SLeNet(nn.Module):
-    def __init__(self):
+    def __init__(self, mask=False):
         super(SLeNet, self).__init__()
+        if mask:
+            mask = np.ones((256, 256), int)
+            np.fill_diagonal(mask, 0)
+            self.mask = torch.tensor([mask])
         self.features = nn.Sequential(
             nn.Conv2d(1, 6, 5, 1),
             nn.MaxPool2d(2, stride=2),
@@ -51,6 +56,7 @@ class SLeNet(nn.Module):
             )
         self.distance = nn.CosineSimilarity()
     def forward_one(self, x):
+        if hasattr(self, "mask"): x=self.mask*x
         x = self.features(x)
         x = x.view(x.size()[0], -1)
         x = self.linear(x)
