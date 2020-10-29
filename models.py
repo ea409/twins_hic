@@ -109,8 +109,8 @@ class SAlexNet(nn.Module):
         return out1, out2
 
 
-class SZFNet(nn.Module,mask=False):
-    def __init__(self):
+class SZFNet(nn.Module):
+    def __init__(self,mask=False):
         super(SZFNet, self).__init__()
         self.channels = 1
         self.conv_net = self.get_conv_net()
