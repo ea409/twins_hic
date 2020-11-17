@@ -42,11 +42,11 @@ grouped = GroupedHiCDataset( [siamese1, siamese2], reference = 'mm9')
 
 ## Downstream
 
-# Integrated Gradient maps 
+### Integrated Gradient maps 
 
 ![](output_example/downstream.png)
 
-# TSNE and other dimensionality reduction methods 
+### TSNE and other dimensionality reduction methods 
 ![](output_example/tcell_development.png)
 
 
