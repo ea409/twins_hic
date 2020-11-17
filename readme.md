@@ -40,15 +40,17 @@ grouped = GroupedHiCDataset( [siamese1, siamese2], reference = 'mm9')
 
 ## Run Test Models
 
+![](output_example/test_dist.png)
+![](output_example/train_dist.png)
+
+
 ## Downstream
 
 ### Integrated Gradient maps 
-
-<img src="https://gitlab.doc.ic.ac.uk/ealjibur/CNN/-/blob/master/output_example/downstream.png" width="200">
-
-### TSNE and other dimensionality reduction methods 
 ![](output_example/tcell_development.png)
 
+### TSNE and other dimensionality reduction methods 
+<img src="output_example/downstream.png" width="400">
 
 
 
