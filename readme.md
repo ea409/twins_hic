@@ -40,7 +40,17 @@ grouped = GroupedHiCDataset( [siamese1, siamese2], reference = 'mm9')
 
 ## Run Test Models
 
-## Results
+## Downstream
+
+# Integrated Gradient maps 
+
+![](output_example/downstream.png)
+
+# TSNE and other dimensionality reduction methods 
+![](output_example/tcell_development.png)
+
+
+
 
 <!--- With data taken from .hic juicer dump files at 10kb, this repo produces small 880kb cleaned images which are partially overlapping from the diagonal on 
 three biological phenotypes. The phenotypes are Wild Type, CTCF knockout and Rad21, CTCF double knockout and are all taken from mouse double positive thymocytes. 
