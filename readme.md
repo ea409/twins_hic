@@ -1,5 +1,5 @@
-# Hi-C Convolutional Neural Network
-This module contains an efficient data laoder and training structure for Hi-C data. The aim is to learn patterns from observations made along the diagonal of the Hi-C maps. This data is made up of reads which have typically been aligned, processed and normalised using the HiCPro pipeline. The result file is of the format `.hic`. 
+# Hi-SiNet
+This module contains an efficient data laoder and training structure for Hi-C data. The aim is to learn patterns from observations made along the diagonal of the Hi-C maps. This data is made up of reads which have typically been aligned, processed and normalised using either the HiCPro or the distiller pipeline. The result file is of the format `.hic` or `.mcool`. 
 
 ## Installation and Testing
 
@@ -40,15 +40,19 @@ grouped = GroupedHiCDataset( [siamese1, siamese2], reference = 'mm9')
 
 ## Run Test Models
 
+Models can be tested using the siamese_test.py script. Here a threshold is calculated using the train and validation for the separation of replicate pairs from condition pairs which is subsequentially used to calculate the percentage of replicate and condition pairs correctly identified. This script also produces two output plots one describing the train and validation distance distributions and the other the test. If the model has trained correctly without overfitting then these distibutions should be comparable. 
+
+| Train |  Test |
+| ------ | ------ |
+| ![](output_example/train_dist.png)  | ![](output_example/test_dist.png)|
+
 ## Downstream
 
 ### Integrated Gradient maps 
-
-<img src="https://gitlab.doc.ic.ac.uk/ealjibur/CNN/-/blob/master/output_example/downstream.png" width="200">
-
-### TSNE and other dimensionality reduction methods 
 ![](output_example/tcell_development.png)
 
+### TSNE and other dimensionality reduction methods 
+<img src="output_example/downstream.png" width="400">
 
 
 
