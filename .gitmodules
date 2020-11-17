@@ -1,6 +1,0 @@
-[submodule "pytorch-cnn-visualizations"]
-	path = pytorch-cnn-visualizations
-	url = https://github.com/utkuozbulak/pytorch-cnn-visualizations.git
-[submodule "pyGenomeTracks"]
-	path = pyGenomeTracks
-	url = https://github.com/deeptools/pyGenomeTracks.git
