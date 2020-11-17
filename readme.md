@@ -42,7 +42,7 @@ grouped = GroupedHiCDataset( [siamese1, siamese2], reference = 'mm9')
 
 Models can be tested using the siamese_test.py script. Here a threshold is calculated using the train and validation for the separation of replicate pairs from condition pairs which is subsequentially used to calculate the percentage of replicate and condition pairs correctly identified. This script also produces two output plots one describing the train and validation distance distributions and the other the test. If the model has trained correctly without overfitting then these distibutions should be comparable. 
 
-| Test |  Train |
+| Train |  Test |
 | ------ | ------ |
 | ![](output_example/train_dist.png)  | ![](output_example/test_dist.png)|
 
