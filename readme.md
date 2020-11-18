@@ -37,6 +37,7 @@ grouped = GroupedHiCDataset( [siamese1, siamese2], reference = 'mm9')
 ```
 
 ## Run Train Models 
+Models can be trained using the siamese_train.py script. 
 
 ## Run Test Models
 
@@ -45,6 +46,8 @@ Models can be tested using the siamese_test.py script. Here a threshold is calcu
 | Train |  Test |
 | ------ | ------ |
 | ![](output_example/train_dist.png)  | ![](output_example/test_dist.png)|
+
+The distances between regions in their own right are of interest, regions with known differences in terms of enhancer activation etc are those which also have the highest euclidean distance - therefore using the euclidean distances or even looking at only regions with very high euclidean distances can help focus your research. 
 
 ## Downstream
 
@@ -67,6 +70,8 @@ Then from the IntegratedGradients on the captum package we can obtain comprehens
 ![](output_example/tcell_development.png)
 
 ### TSNE and other dimensionality reduction methods 
+Since the output of our networks is a representation, these can be used for downstream tasks such as inputs to other NNs for predictions of features and analysis of the variability between regions, replicates and conditions. As an example these may be used as an input to TSNE, PCA or other dimensionality reduction tools and then analysed in their own right. Each representation must have encoded information about the existing TADs, contact domains and other features in the region and therefore cana be used for downstream tasks where this information is of interest. 
+
 <img src="output_example/downstream.png" width="400">
 
 
