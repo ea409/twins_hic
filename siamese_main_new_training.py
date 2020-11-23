@@ -91,7 +91,7 @@ for epoch in range(args.epoch_training):
         loss2 = criterion2(output_class, labels)
         labels = labels.type(torch.FloatTensor).to(cuda)
         loss1 = criterion(output1, output2, labels)
-        loss = loss1 + loss2
+        loss = loss1 + 2*loss2
         loss.backward()
         optimizer.step()
         running_loss += loss.item()
