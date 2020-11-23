@@ -63,12 +63,12 @@ dataloader_validation = DataLoader(Siamese_validation, batch_size=100, sampler =
 
 # Convolutional neural network (two convolutional layers)
 model = eval("models."+ args.model_name)(mask=args.mask).to(cuda)
-model_save_path = args.outpath + args.model_name  +'_' + str(learning_rate) +'_'+ str(batch_size)+'_' + str(args.seed) +'.ckpt'
-torch.save(model.state_dict(),model_save_path)
+model_save_path = args.outpath + args.model_name  +'_' + str(learning_rate) +'_'+ str(batch_size)+'_' + str(args.seed) 
+torch.save(model.state_dict(),model_save_path+'.ckpt')
 
 #classification net 
 nn_model = models.LastLayerNN()
-torch.save(nn_model.state_dict(),"nn_"+model_save_path)
+torch.save(nn_model.state_dict(),model_save_path+"_nn.ckpt")
 
 # Loss and optimizer
 criterion = ContrastiveLoss() #tnn.CosineEmbeddingLoss() #
@@ -115,8 +115,8 @@ for epoch in range(args.epoch_training):
     else:
         prev_validation_loss = running_validation_loss
 
-    torch.save(model.state_dict(), model_save_path)
-    torch.save(nn_model.state_dict(),"nn_"+model_save_path)
+    torch.save(model.state_dict(), model_save_path+'.ckpt')
+    torch.save(nn_model.state_dict(),model_save_path+"_nn.ckpt")
 
 
 
