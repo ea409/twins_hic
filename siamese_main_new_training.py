@@ -88,9 +88,9 @@ for epoch in range(args.epoch_training):
         optimizer.zero_grad()
         output1, output2 = model(input1, input2)
         output_class = nn_model(output1, output2)
-        loss1 = criterion(output1, output2, labels)
-        labels = labels.type(torch.FloatTensor)
         loss2 = criterion2(output_class, labels)
+        labels = labels.type(torch.FloatTensor).to(cuda)
+        loss1 = criterion(output1, output2, labels)
         loss = loss1 + loss2
         loss.backward()
         optimizer.step()
