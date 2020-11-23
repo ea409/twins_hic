@@ -5,6 +5,15 @@ import numpy as np
 
 #learn f(x) such that x is the wt and f(x) is the CTCFKO - then i have to clean and label in a different way.
 #or x is the CTCFKO and f(x) is the DKO
+class LastLayerNN(nn.Module):
+    def __init__(self):
+        super(LastLayerNN, self).__init__()
+        self.net = nn.Sequential(nn.Linear(83, 2),
+            nn.GELU(),
+            nn.Softmax(dim=-1),
+            )
+    def forward(self, x1, x2):
+        return self.net(x1-x2)
 
 class SiameseNet(nn.Module):
     def __init__(self, mask=False):
