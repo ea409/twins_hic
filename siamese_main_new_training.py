@@ -67,7 +67,7 @@ model_save_path = args.outpath + args.model_name  +'_' + str(learning_rate) +'_'
 torch.save(model.state_dict(),model_save_path+'.ckpt')
 
 #classification net 
-nn_model = models.LastLayerNN()
+nn_model = models.LastLayerNN().to(cuda)
 torch.save(nn_model.state_dict(),model_save_path+"_nn.ckpt")
 
 # Loss and optimizer
