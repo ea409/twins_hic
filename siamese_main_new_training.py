@@ -83,12 +83,13 @@ for epoch in range(args.epoch_training):
     for i, data in enumerate(dataloader):
         input1, input2,  labels = data
         input1, input2 = input1.to(cuda), input2.to(cuda)
-        labels = labels.type(torch.FloatTensor).to(cuda)
+        labels = labels.to(cuda)
         # zero gradients
         optimizer.zero_grad()
         output1, output2 = model(input1, input2)
         output_class = nn_model(output1, output2)
         loss1 = criterion(output1, output2, labels)
+        labels = labels.type(torch.FloatTensor)
         loss2 = criterion2(output_class, labels)
         loss = loss1 + loss2
         loss.backward()
