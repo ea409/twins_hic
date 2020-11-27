@@ -33,6 +33,8 @@ parser.add_argument('--seed',  type=int, default=30004,
                     help='an int for the seed')
 parser.add_argument('--mask',  type=bool, default=False,
                     help='an argument specifying if the diagonal should be masked')
+parser.add_argument('--bias',  type=float, default=2,
+                    help='an argument specifying the bias towards the contrastive loss function')
 parser.add_argument("data_inputs", nargs='+',help="keys from dictionary containing paths for training and validation sets.")
 
 args = parser.parse_args()
@@ -91,7 +93,7 @@ for epoch in range(args.epoch_training):
         loss2 = criterion2(output_class, labels)
         labels = labels.type(torch.FloatTensor).to(cuda)
         loss1 = criterion(output1, output2, labels)
-        loss = 2*loss1 + loss2
+        loss = args.bias*loss1 + loss2
         loss.backward()
         optimizer.step()
         running_loss += loss.item()
