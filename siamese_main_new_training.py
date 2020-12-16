@@ -80,7 +80,7 @@ optimizer = optim.Adagrad(model.parameters())
 #  Training
 for epoch in range(args.epoch_training):
     #training model
-    running_loss = 0.0
+    running_loss1, running_loss2 = 0.0, 0.0
     running_validation_loss = 0.0
     for i, data in enumerate(dataloader):
         input1, input2,  labels = data
@@ -96,10 +96,11 @@ for epoch in range(args.epoch_training):
         loss = args.bias*loss1 + loss2
         loss.backward()
         optimizer.step()
-        running_loss += loss.item()
+        running_loss1 += loss1.item()
+        running_loss2 += loss2.item()
         if (i+1) % no_of_batches == 0:
-            print ('Epoch [{}/{}], Loss: {:.4f}'
-            .format(epoch+1, i, running_loss/no_of_batches))
+            print ('Epoch [{}/{}], Loss1: {:.4f}, Loss2: {:.4f}'
+            .format(epoch+1, i, running_loss1/no_of_batches, running_loss2/no_of_batches))
     #obtaining validation loss
     for i, data in enumerate(dataloader_validation):
         input1,  input2, labels = data
