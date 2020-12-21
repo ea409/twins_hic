@@ -33,11 +33,13 @@ parser.add_argument('--seed',  type=int, default=30004,
                     help='an int for the seed')
 parser.add_argument('--mask',  type=bool, default=False,
                     help='an argument specifying if the diagonal should be masked')
+parser.add_argument('--device',  type=str, default="cuda",
+                    help='the device to train the network with')
 parser.add_argument("data_inputs", nargs='+',help="keys from dictionary containing paths for training and validation sets.")
 
 args = parser.parse_args()
 
-cuda = torch.device("cuda")
+cuda = torch.device(args.device)
 
 with open(args.json_file) as json_file:
     dataset = json.load(json_file)

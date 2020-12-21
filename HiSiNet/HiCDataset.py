@@ -235,6 +235,6 @@ class Metric_HiCDataset(SiameseHiCDataset):
                 self.labels.extend( [ self.sims[0] if curr_data[k][1] == curr_data[j][1] else self.sims[1] ] )
                 self.positions.extend( (pos, k, j) )
 
-    def calculate_distances(self, metric): #e.g. metric = ssim 
+    def calculate_distances(self, metric): #e.g. metric = ssim function with input x y(x,y) and output double with d > 0 
         distances =[metric(data[0], data[1]) for data in self.data ]
         return distances
