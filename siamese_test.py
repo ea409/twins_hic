@@ -3,7 +3,7 @@ from torch.utils.data import Dataset, DataLoader, SequentialSampler
 import torch.nn.functional as F
 import torch.nn as nn
 #from torch_plus import additional_samplers
-from HiSiNet.HiCDataset import  HiCDatasetDec, SiameseHiCDataset,GroupedHiCDataset
+from HiSiNet.HiCDatasetClass import  HiCDatasetDec, SiameseHiCDataset,GroupedHiCDataset
 import HiSiNet.models as models
 import torch
 import matplotlib.pyplot as plt
