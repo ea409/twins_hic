@@ -8,7 +8,7 @@ from scipy.sparse import csr_matrix
 from frozendict import frozendict
 import cooler
 from reference_dictionaries import reference_genomes
-from skimage.metrics import structural_similarity as ssim
+#from skimage.metrics import structural_similarity as ssim
 
 class HiCDataset(Dataset):
     """Hi-C dataset."""
@@ -222,11 +222,11 @@ class metriclearnpaired_HiCDataset(SiameseHiCDataset):
                 self.labels.extend( [ self.sims[0] if curr_data[k][1] == curr_data[j][1] else self.sims[1] ] )
                 self.positions.extend( (pos, k, j) )
 
-class SSIM_HiCDataset(SiameseHiCDataset):
+class Metric_HiCDataset(SiameseHiCDataset):
     """Paired Hi-C datasets by genomic location."""
     def __init__(self, *args, **kwargs):
         self.labels =[]
-        super(SSIM_HiCDataset, self).__init__( *args, **kwargs)
+        super(Metric_HiCDataset, self).__init__( *args, **kwargs)
 
     def append_data(self, curr_data, pos):
         for k in range(0,len(curr_data)):
@@ -236,6 +236,6 @@ class SSIM_HiCDataset(SiameseHiCDataset):
                 self.labels.extend( [ self.sims[0] if curr_data[k][1] == curr_data[j][1] else self.sims[1] ] )
                 self.positions.extend( (pos, k, j) )
 
-    def calculate_ssim(self):
-        SSIM=[1-ssim(data[0], data[1]) for data in self.data ]
-        return SSIM
+    def calculate_distances(self, metric): #e.g. metric = ssim 
+        distances =[metric(data[0], data[1]) for data in self.data ]
+        return distances
