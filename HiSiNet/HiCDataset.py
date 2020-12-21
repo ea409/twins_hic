@@ -7,8 +7,7 @@ from torch.utils.data import Dataset
 from scipy.sparse import csr_matrix
 from frozendict import frozendict
 import cooler
-from reference_dictionaries import reference_genomes
-#from skimage.metrics import structural_similarity as ssim
+from HiSiNet.reference_dictionaries import reference_genomes
 
 class HiCDataset(Dataset):
     """Hi-C dataset."""

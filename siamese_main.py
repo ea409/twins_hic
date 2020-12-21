@@ -6,12 +6,12 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 import torch.nn as nn
 #from torch_plus import additional_samplers
-from HiCDataset import HiCDatasetDec, SiameseHiCDataset,GroupedHiCDataset
-import models
+from HiSiNet.HiCDataset import HiCDatasetDec, SiameseHiCDataset,GroupedHiCDataset
+import HiSiNet.models as models
 import torch
 from torch_plus.loss import ContrastiveLoss
 import argparse
-from reference_dictionaries import reference_genomes
+from HiSiNet.reference_dictionaries import reference_genomes
 import json
 
 parser = argparse.ArgumentParser(description='Siamese network')

@@ -3,12 +3,12 @@ from torch.utils.data import Dataset, DataLoader, SequentialSampler
 import torch.nn.functional as F
 import torch.nn as nn
 #from torch_plus import additional_samplers
-from HiCDataset import  HiCDatasetDec, SiameseHiCDataset,GroupedHiCDataset
-import models
+from HiSiNet.HiCDataset import  HiCDatasetDec, SiameseHiCDataset,GroupedHiCDataset
+import HiSiNet.models as models
 import torch
 import matplotlib.pyplot as plt
 import argparse
-from reference_dictionaries import reference_genomes
+from HiSiNet.reference_dictionaries import reference_genomes
 import json
 
 parser = argparse.ArgumentParser(description='Siamese network testing module')
