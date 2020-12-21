@@ -41,6 +41,12 @@ class HiCDataset(Dataset):
         with open(filename, 'wb') as output:
             output.write(pickle.dumps(self))
             output.close()
+    
+    def get_genomic_positions(self):
+        " returns chromosome, start, end "
+        chromosomes = np.concatenate( [ np.repeat(chromname, chromosome_range[1]-chromosome_range[0]) for 
+                                    chromname, chromosome_range in self.metadata['chromosomes'].items()])
+        return {"Chromosome": chromosomes, "Start":  np.array(self.positions),"End": np.array(self.positions)+self.resolution}
 
     @staticmethod
     def load(filename):
