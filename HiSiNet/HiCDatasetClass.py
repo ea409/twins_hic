@@ -41,10 +41,14 @@ class HiCDataset(Dataset):
             output.write(pickle.dumps(self))
             output.close()
     
-    def get_genomic_positions(self):
+    def get_genomic_positions(self, append=''):
         " returns chromosome, start, end "
-        chromosomes = np.concatenate( [ np.repeat(chromname, chromosome_range[1]-chromosome_range[0]) for 
-                                    chromname, chromosome_range in self.metadata['chromosomes'].items()])
+        try:
+            chromosome_metadata = self.chromosomes.items()
+        except:
+            chromosome_metadata = self.metadata['chromosomes'].items()
+        chromosomes = np.concatenate( [ np.repeat(append+chromname, chromosome_range[1]-chromosome_range[0]) for 
+                                    chromname, chromosome_range in chromosome_metadata])
         return {"Chromosome": chromosomes, "Start":  np.array(self.positions),"End": np.array(self.positions)+self.resolution}
 
     @staticmethod
@@ -118,6 +122,7 @@ class SiameseHiCDataset(HiCDataset):
         self.reference, self.chromsizes = reference
         self.data =[]
         self.positions =[]
+        self.labels = []
         self.chromosomes = OrderedDict()
         checks = self.check_input(list_of_HiCDatasets)
         if not checks: return None
@@ -142,7 +147,8 @@ class SiameseHiCDataset(HiCDataset):
 
     def append_data(self, curr_data, pos):
         self.data.extend([(curr_data[k][0], curr_data[j][0], (self.sims[0] if curr_data[k][1] == curr_data[j][1] else self.sims[1]) ) for k in range(0,len(curr_data)) for j in range(k+1,len(curr_data))])
-        self.positions.extend( [(pos, k, j) for k in range(0,len(curr_data)) for j in range(k+1,len(curr_data))])
+        self.positions.extend( [pos for k in range(0,len(curr_data)) for j in range(k+1,len(curr_data))])
+        self.labels.extend( [( k, j) for k in range(0,len(curr_data)) for j in range(k+1,len(curr_data))])
 
     def make_data(self, list_of_HiCDatasets):
         datasets = len(list_of_HiCDatasets)
@@ -205,11 +211,11 @@ class HiCDatasetCool(HiCDataset):
         self.data.append((image_scp, self.metadata['class_id']))
         self.positions.append( int(self.data_res*(start_pos-first)))
 
-
+#to do fix this. 
 class metriclearnpaired_HiCDataset(SiameseHiCDataset):
     """Paired Hi-C datasets by genomic location."""
     def __init__(self, *args, **kwargs):
-        self.labels =[]
+        self.class_labels =[]
         super(metriclearnpaired_HiCDataset, self).__init__( *args, **kwargs)
 
     def append_data(self, curr_data, pos):
@@ -218,13 +224,14 @@ class metriclearnpaired_HiCDataset(SiameseHiCDataset):
                 x1, x2 = curr_data[k][0].numpy(), curr_data[j][0].numpy()
                 x1, x2 = x1.flatten(), x2.flatten()
                 self.data.extend(  [ np.vstack((x1,x2))] )
-                self.labels.extend( [ self.sims[0] if curr_data[k][1] == curr_data[j][1] else self.sims[1] ] )
-                self.positions.extend( (pos, k, j) )
+                self.labels.extend( ( k, j) )
+                self.class_labels.extend( [ self.sims[0] if curr_data[k][1] == curr_data[j][1] else self.sims[1] ] )
+                self.positions.extend( pos )
 
 class Metric_HiCDataset(SiameseHiCDataset):
     """Paired Hi-C datasets by genomic location."""
     def __init__(self, *args, **kwargs):
-        self.labels =[]
+        self.class_labels =[]
         super(Metric_HiCDataset, self).__init__( *args, **kwargs)
 
     def append_data(self, curr_data, pos):
@@ -232,8 +239,9 @@ class Metric_HiCDataset(SiameseHiCDataset):
             for j in range(k+1,len(curr_data)):
                 x1, x2 = curr_data[k][0][0].numpy(), curr_data[j][0][0].numpy()
                 self.data.extend(  [  (x1, x2) ] )
-                self.labels.extend( [ self.sims[0] if curr_data[k][1] == curr_data[j][1] else self.sims[1] ] )
-                self.positions.extend( (pos, k, j) )
+                self.class_labels.extend( [ self.sims[0] if curr_data[k][1] == curr_data[j][1] else self.sims[1] ] )
+                self.labels.extend( ( k, j) )
+                self.positions.extend( pos )
 
     def calculate_distances(self, metric): #e.g. metric = ssim function with input x y(x,y) and output double with d > 0 
         distances =[metric(data[0], data[1]) for data in self.data ]
