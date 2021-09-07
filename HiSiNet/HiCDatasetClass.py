@@ -27,7 +27,7 @@ class HiCDataset(Dataset):
         self.reference, self.data_res, self.resolution, self.split_res,  self.pixel_size = reference, data_res, resolution, int(resolution/stride), int(resolution/data_res)
         self.metadata = {'filename': metadata[0], 'replicate': metadata[1], 'norm': metadata[2], 'type_of_bin': metadata[3], 'class_id': metadata[4], 'chromosomes': OrderedDict()}
         self.positions = []
-        self.exclude_chroms = exclude_chroms +['All', 'ALL', 'all']
+        self.exclude_chroms = exclude_chroms +['All', 'ALL', 'all'] 
         self.data = []
 
     def __len__(self):
@@ -210,39 +210,3 @@ class HiCDatasetCool(HiCDataset):
         image_scp = as_torch_tensor(image_scp, dtype=torch_float)
         self.data.append((image_scp, self.metadata['class_id']))
         self.positions.append( int(self.data_res*(start_pos-first)))
-
-#to do fix this. 
-class metriclearnpaired_HiCDataset(SiameseHiCDataset):
-    """Paired Hi-C datasets by genomic location."""
-    def __init__(self, *args, **kwargs):
-        self.class_labels =[]
-        super(metriclearnpaired_HiCDataset, self).__init__( *args, **kwargs)
-
-    def append_data(self, curr_data, pos):
-        for k in range(0,len(curr_data)):
-            for j in range(k+1,len(curr_data)):
-                x1, x2 = curr_data[k][0].numpy(), curr_data[j][0].numpy()
-                x1, x2 = x1.flatten(), x2.flatten()
-                self.data.extend(  [ np.vstack((x1,x2))] )
-                self.labels.extend( ( k, j) )
-                self.class_labels.extend( [ self.sims[0] if curr_data[k][1] == curr_data[j][1] else self.sims[1] ] )
-                self.positions.extend( pos )
-
-class Metric_HiCDataset(SiameseHiCDataset):
-    """Paired Hi-C datasets by genomic location."""
-    def __init__(self, *args, **kwargs):
-        self.class_labels =[]
-        super(Metric_HiCDataset, self).__init__( *args, **kwargs)
-
-    def append_data(self, curr_data, pos):
-        for k in range(0,len(curr_data)):
-            for j in range(k+1,len(curr_data)):
-                x1, x2 = curr_data[k][0][0].numpy(), curr_data[j][0][0].numpy()
-                self.data.extend(  [  (x1, x2) ] )
-                self.class_labels.extend( [ self.sims[0] if curr_data[k][1] == curr_data[j][1] else self.sims[1] ] )
-                self.labels.extend( ( k, j) )
-                self.positions.extend( pos )
-
-    def calculate_distances(self, metric): #e.g. metric = ssim function with input x y(x,y) and output double with d > 0 
-        distances =[metric(data[0], data[1]) for data in self.data ]
-        return distances
