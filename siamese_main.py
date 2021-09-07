@@ -33,13 +33,13 @@ parser.add_argument('--seed',  type=int, default=30004,
                     help='an int for the seed')
 parser.add_argument('--mask',  type=bool, default=False,
                     help='an argument specifying if the diagonal should be masked')
-parser.add_argument('--device',  type=str, default="cuda",
-                    help='the device to train the network with')
+parser.add_argument('--bias',  type=float, default=2,
+                    help='an argument specifying the bias towards the contrastive loss function')
 parser.add_argument("data_inputs", nargs='+',help="keys from dictionary containing paths for training and validation sets.")
 
 args = parser.parse_args()
 
-cuda = torch.device(args.device)
+cuda = torch.device("cuda")
 
 with open(args.json_file) as json_file:
     dataset = json.load(json_file)
@@ -65,32 +65,42 @@ dataloader_validation = DataLoader(Siamese_validation, batch_size=100, sampler =
 
 # Convolutional neural network (two convolutional layers)
 model = eval("models."+ args.model_name)(mask=args.mask).to(cuda)
-model_save_path = args.outpath + args.model_name  +'_' + str(learning_rate) +'_'+ str(batch_size)+'_' + str(args.seed) +'.ckpt'
-torch.save(model.state_dict(),model_save_path)
+model_save_path = args.outpath + args.model_name  +'_' + str(learning_rate) +'_'+ str(batch_size)+'_' + str(args.seed) 
+torch.save(model.state_dict(),model_save_path+'.ckpt')
+
+#classification net 
+nn_model = models.LastLayerNN().to(cuda)
+torch.save(nn_model.state_dict(),model_save_path+"_nn.ckpt")
 
 # Loss and optimizer
-criterion = ContrastiveLoss() #torch.nn.CosineEmbeddingLoss() #
+criterion = ContrastiveLoss() #tnn.CosineEmbeddingLoss() #
+criterion2 = nn.CrossEntropyLoss()
 optimizer = optim.Adagrad(model.parameters())
 
 #  Training
 for epoch in range(args.epoch_training):
     #training model
-    running_loss = 0.0
+    running_loss1, running_loss2 = 0.0, 0.0
     running_validation_loss = 0.0
     for i, data in enumerate(dataloader):
         input1, input2,  labels = data
         input1, input2 = input1.to(cuda), input2.to(cuda)
-        labels = labels.type(torch.FloatTensor).to(cuda)
+        labels = labels.to(cuda)
         # zero gradients
         optimizer.zero_grad()
         output1, output2 = model(input1, input2)
-        loss = criterion(output1, output2, labels)
+        output_class = nn_model(output1, output2)
+        loss2 = criterion2(output_class, labels)
+        labels = labels.type(torch.FloatTensor).to(cuda)
+        loss1 = criterion(output1, output2, labels)
+        loss = args.bias*loss1 + loss2
         loss.backward()
         optimizer.step()
-        running_loss += loss.item()
+        running_loss1 += loss1.item()
+        running_loss2 += loss2.item()
         if (i+1) % no_of_batches == 0:
-            print ('Epoch [{}/{}], Loss: {:.4f}'
-            .format(epoch+1, i, running_loss/no_of_batches))
+            print ('Epoch [{}/{}], Loss1: {:.4f}, Loss2: {:.4f}'
+            .format(epoch+1, i, running_loss1/no_of_batches, running_loss2/no_of_batches))
     #obtaining validation loss
     for i, data in enumerate(dataloader_validation):
         input1,  input2, labels = data
@@ -109,7 +119,8 @@ for epoch in range(args.epoch_training):
     else:
         prev_validation_loss = running_validation_loss
 
-    torch.save(model.state_dict(), model_save_path)
+    torch.save(model.state_dict(), model_save_path+'.ckpt')
+    torch.save(nn_model.state_dict(),model_save_path+"_nn.ckpt")
 
 
 
