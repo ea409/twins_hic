@@ -175,10 +175,10 @@ class HiCDatasetCool(HiCDataset):
         """ metadata: A list consisting of
             filepath: string
             replicate name: string
-            norm: (one of <None/cool_norm>)
+            norm: (one of <None/cool_norm/KR/VC/VC_SQRT>)
             class id: containing an integer specifying the biological condition of the Hi-C file."""
         cl_file= cooler.Cooler(metadata[0])
-        metadata[2] = (metadata[2]=="cool_norm")
+        metadata[2] = True if (metadata[2]=="cool_norm") else metadata[2] 
         metadata.insert(3, "NA")
         super(HiCDatasetCool, self).__init__(metadata, cl_file.binsize, resolution, reference = cl_file.info["genome-assembly"], **kwargs)
         chromosomes = list(set(cl_file.chromnames) - set(self.exclude_chroms))
