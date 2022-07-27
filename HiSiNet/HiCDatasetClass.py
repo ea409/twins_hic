@@ -8,6 +8,7 @@ from scipy.sparse import csr_matrix
 from frozendict import frozendict
 import cooler
 from HiSiNet.reference_dictionaries import reference_genomes
+from skimage.transform import resize
 
 class HiCDataset(Dataset):
     """Hi-C dataset."""
@@ -210,3 +211,88 @@ class HiCDatasetCool(HiCDataset):
         image_scp = as_torch_tensor(image_scp, dtype=torch_float)
         self.data.append((image_scp, self.metadata['class_id']))
         self.positions.append( int(self.data_res*(start_pos-first)))
+        
+
+class PairOfDatasets(SiameseHiCDataset):
+    from scipy import ndimage
+    """Paired Hi-C datasets by genomic location to create feature map."""
+    def __init__(self, list_of_HiCDatasets, model, **kwargs):
+        self.model = model
+        super(PairOfDatasets, self).__init__(list_of_HiCDatasets, **kwargs)
+        self.pixel_size = int(self.resolution/self.data_res)
+        self.paired_maps = {chromosome: self.make_maps(chromosome) for chromosome in self.chromosomes.keys()} 
+        
+    def append_data(self, curr_data, pos):
+        self.data.extend([(self.model.features(curr_data[k][0].unsqueeze(0)).detach().numpy() - self.model.features(curr_data[j][0].unsqueeze(0)).detach().numpy())[0]  for k in range(0,len(curr_data)) for j in range(k+1,len(curr_data))])
+        self.positions.extend( [pos for k in range(0,len(curr_data)) for j in range(k+1,len(curr_data))])
+        self.labels.extend( [( k, j) for k in range(0,len(curr_data)) for j in range(k+1,len(curr_data))])
+        
+    def make_maps_base(self, chromosome, diagonal_off=4):
+        nfilter = self.model.features[-2].out_channels
+        chrom_index1, chrom_index2 = self.chromosomes[chromosome]
+        if (chrom_index2==chrom_index1): return None
+        dims = (nfilter, self.pixel_size , int((self.positions[chrom_index1])/self.data_res) + self.pixel_size)
+        pair_maps = {}
+        dataset_dims=(self.pixel_size ,self.pixel_size)
+
+        for (map1,map2) in [(j,i) for j in range(0,len(self.metadata)) for i in range(j+1,len(self.metadata))]:
+            pair_maps[(map1,map2)] = {}
+            pair_maps[(map1,map2)]["rotated_shapes"] = np.zeros(dims)
+            pair_maps[(map1,map2)]["norm"] = np.zeros(dims) 
+
+        for ind in range(chrom_index2, chrom_index1, -1):
+            true_ind=ind-1
+            for curr_filt in range(0, nfilter):
+                x = self.data[true_ind][curr_filt]
+                x = (x+np.transpose(x))/2
+                x = np.multiply(x,(np.tril(np.ones(x.shape[0]), -diagonal_off)+np.triu(np.ones(x.shape[1]), k=diagonal_off)))
+                rotated = self.ndimage.rotate(x, angle=45, reshape=True)
+                #if np.all(np.isnan(rotated )): return None 
+                rotated = resize(rotated, dataset_dims)
+                pair_maps[self.labels[true_ind]]["rotated_shapes"][curr_filt, :, int(self.positions[true_ind]/self.data_res):int((self.positions[true_ind]+self.resolution)/self.data_res)]+=rotated
+                pair_maps[self.labels[true_ind]]["norm"][curr_filt, :,int(self.positions[true_ind]/self.data_res):int((self.positions[true_ind]+self.resolution)/self.data_res)]+=1
+       
+        all_maps= {pair:pair_maps[pair]["rotated_shapes"]/pair_maps[pair]["norm"] for pair in pair_maps.keys()}
+        return all_maps
+    
+    def make_maps_grouped(self,all_maps):
+        if all_maps is None: return None
+        all_maps_grouped = {}
+        maps_metadata = {}
+        maps_metadata = { i:metadata["class_id"]  for i, metadata in enumerate(self.metadata)}
+        all_maps_grouped, rep_pairs, cond_pairs = {}, 0, 0
+        for pairs in all_maps.keys():
+            if np.all(np.isnan(all_maps[pairs])): continue
+            if maps_metadata[pairs[0]]==maps_metadata[pairs[1]]:
+                rep_pairs +=1
+                if "replicate" in all_maps_grouped: all_maps_grouped["replicate"]+= all_maps[pairs]
+                else: all_maps_grouped["replicate"] = all_maps[pairs]
+            else:
+                cond_pairs +=1
+                if "conditions" in all_maps_grouped: all_maps_grouped["conditions"]+= all_maps[pairs]
+                else: all_maps_grouped["conditions"] = all_maps[pairs]
+                    
+        all_maps_grouped["replicate"]=all_maps_grouped["replicate"]/rep_pairs
+        all_maps_grouped["conditions"]=all_maps_grouped["conditions"]/cond_pairs
+        return all_maps_grouped
+    
+    def extract_features(self, chromosome, nfilter, pair, qthresh=0.999, min_length=1, min_width=1, pad_extra=3, im_size=30):
+        thresh = np.nanquantile(self.paired_maps[chromosome][pair][nfilter,:,:], qthresh)
+        arr =  self.ndimage.label(np.abs(self.paired_maps[chromosome][pair][nfilter,:int(self.pixel_size/2),:])>0.45*thresh) 
+        features = []
+        for feature_index in np.unique(arr[0])[1:]:
+            indices=np.where(arr[0]==feature_index)
+            if (len(indices[0])==min_length )|(len(indices[1])==min_width): continue 
+            temp = arr[0][np.min(indices[0]):np.max(indices[0]), np.min(indices[1]):np.max(indices[1])]
+            original_dims, height= temp.shape, np.min(indices[0])
+            temp = np.pad(temp, (temp.shape[0]-temp.shape[1]+ pad_extra  if (temp.shape[0]-temp.shape[1] > 0) else pad_extra,
+            temp.shape[1]-temp.shape[0]+ pad_extra  if (temp.shape[1]-temp.shape[0] > 0) else pad_extra ))
+            temp = resize(temp, (im_size,im_size),anti_aliasing=False)
+            features.append((feature_index, temp, original_dims, height, arr[1]))
+        return features
+    
+    def make_maps(self,chromosome, diagonal_off=4):
+        all_maps = self.make_maps_base(chromosome, diagonal_off=diagonal_off)
+        all_maps_grouped = self.make_maps_grouped(all_maps)
+        return all_maps_grouped
+        
