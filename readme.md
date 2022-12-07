@@ -1,5 +1,5 @@
-# Hi-SiNet
-This module contains an efficient data laoder and training structure for Hi-C data. The aim is to learn patterns from observations made along the diagonal of the Hi-C maps. This data is made up of reads which have typically been aligned, processed and normalised using either the HiCPro or the distiller pipeline. The resultant files of the format `.hic` or `.mcool` can be used as inputs for Hi-SiNet. 
+# Twins
+This module contains an efficient data laoder and training structure for Hi-C data. The aim is to learn patterns from observations made along the diagonal of the Hi-C maps. This data is made up of reads which have typically been aligned, processed and normalised using either the HiCPro or the distiller pipeline. The resultant files of the format `.hic` or `.mcool` can be used as inputs for Twins. 
 
 ## Installation and Testing
 
@@ -70,42 +70,3 @@ class ToyModel(nn.Module):
 
 ```
 Then from the IntegratedGradients on the captum package we can obtain comprehension maps of the Hi-C region of choice taken against a baseline as demonstrated below. Note that in this way we can check our network is understanding important features because these maps should highlight TADs, contact domains, stripes, loops and other features associated with Hi-C data. If these maps highlight random noise then there is a potential the sequencing depth between samples is too inconsistent for this method. 
-
-![](output_example/tcell_development.png)
-
-### TSNE and other dimensionality reduction methods 
-Since the output of our networks is a representation, these can be used for downstream tasks such as inputs to other NNs for predictions of features and analysis of the variability between regions, replicates and conditions. As an example these may be used as an input to TSNE, PCA or other dimensionality reduction tools and then analysed in their own right. Each representation must have encoded information about the existing TADs, contact domains and other features in the region and therefore cana be used for downstream tasks where this information is of interest. 
-
-<img src="output_example/downstream.png" width="400">
-
-
-
-<!--- With data taken from .hic juicer dump files at 10kb, this repo produces small 880kb cleaned images which are partially overlapping from the diagonal on 
-three biological phenotypes. The phenotypes are Wild Type, CTCF knockout and Rad21, CTCF double knockout and are all taken from mouse double positive thymocytes. 
-The data is cleanded using split_files which is designed in order to minimize memory usage. The data can then bee loaded as a HiCclass dataset. 
-
-The trained CNN is 78% accurate on the test chromosome (chr2), this data has been used in order to produce saliency maps by calling 
-
-```
-from torch_plus import visualisation
-from plot_visualisations import quickplot_all_reps
-
-GBP = visualisation.Guided(model) #visualisation.Vanilla(model) 
-quickplot_all_reps(dataset,'chr2', index, GBP)
-```
-Where index is the position in chromosome - start position of the hic file in kb divided by 110000.
-
-The aim of this work is to provide biological insights on differences between phenotypes  
-
-## Results 
-The outcome is very clear distances identified by the classifier as being of interest. Left to right the images displayed show the saliency map, the HiC map and 
-the saliency map overlayed onto the Hi-C map. Top to bottom the images are wild type, CTCF knockout and CTCF, Rad21 Knockout.
-
-![](output_example/Picture_1.png)
-
-This behaviour is replicable across many regions
-
-|  |  |
-| ------ | ------ |
-| ![](output_example/Picture_2.png)  | ![](output_example/Picture_3.png) |
-| ![](output_example/Picture_1.png)  | ![](output_example/Picture_4.png) | --->
