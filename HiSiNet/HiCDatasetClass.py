@@ -1,12 +1,10 @@
 import pickle
-import straw
 import numpy as np
 from torch import as_tensor as as_torch_tensor, float as torch_float
 from collections import OrderedDict
 from torch.utils.data import Dataset
 from scipy.sparse import csr_matrix
 from frozendict import frozendict
-import cooler
 from HiSiNet.reference_dictionaries import reference_genomes
 from skimage.transform import resize
 
@@ -61,6 +59,7 @@ class HiCDataset(Dataset):
 
 
 class HiCDatasetDec(HiCDataset):
+    import straw
     """Hi-C dataset loader"""
     def __init__(self, *args, **kwargs):
         super(HiCDatasetDec, self).__init__(*args, **kwargs)
@@ -171,6 +170,7 @@ class SiameseHiCDataset(HiCDataset):
         self.data = tuple(self.data)
 
 class HiCDatasetCool(HiCDataset):
+    import cooler
     """Hi-C dataset loader"""
     def __init__(self, metadata, resolution, **kwargs):
         """ metadata: A list consisting of
