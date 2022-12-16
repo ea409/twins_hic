@@ -276,21 +276,38 @@ class PairOfDatasets(SiameseHiCDataset):
         all_maps_grouped["conditions"]=all_maps_grouped["conditions"]/cond_pairs
         return all_maps_grouped
     
-    def extract_features(self, chromosome, nfilter, pair, qthresh=0.999, min_length=1, min_width=1, pad_extra=3, im_size=30):
-        thresh = np.nanquantile(self.paired_maps[chromosome][pair][nfilter,:,:], qthresh)
-        arr =  self.ndimage.label(np.abs(self.paired_maps[chromosome][pair][nfilter,:int(self.pixel_size/2),:])>0.45*thresh) 
+    def extract_features(self, chromosome, nfilter, pair, qthresh=0.999, min_length=10, max_length=256, min_width=10,max_width=256, pad_extra=3, im_size=20):
+        if nfilter=="all": curr_map = np.concatenate([np.sum(value["replicate"][:,:int(self.pixel_size/2),:],axis=0) for chrom, value in self.paired_maps.items() 
+                            if value is not None ], axis=1)
+        else: curr_map = np.concatenate([value["replicate"][nfilter,:int(self.pixel_size/2),:] for chrom, value in self.paired_maps.items() 
+                            if value is not None ], axis=1)
+
+        pos_thresh = np.max([np.nanquantile(curr_map, qthresh),-np.nanquantile(curr_map, 1-qthresh)])
+        neg_thresh = np.min([-np.nanquantile(curr_map, qthresh),np.nanquantile(curr_map, 1-qthresh)])
+
+        if nfilter=="all": curr_map=np.sum(self.paired_maps[chromosome][pair][:,int(self.pixel_size/2):,:],axis=0)
+        else: curr_map=self.paired_maps[chromosome][pair][nfilter,int(self.pixel_size/2):,:]
+
+        arr_pos, arr_neg =  (curr_map>pos_thresh), (curr_map<neg_thresh)
+        arr_pos, arr_neg =  ndimage.label(arr_pos), ndimage.label(arr_neg)
+
         features = []
-        for feature_index in np.unique(arr[0])[1:]:
-            indices=np.where(arr[0]==feature_index)
-            if (len(indices[0])==min_length )|(len(indices[1])==min_width): continue 
-            temp = arr[0][np.min(indices[0]):np.max(indices[0]), np.min(indices[1]):np.max(indices[1])]
-            original_dims, height= temp.shape, np.min(indices[0])
-            temp = np.pad(temp, (temp.shape[0]-temp.shape[1]+ pad_extra  if (temp.shape[0]-temp.shape[1] > 0) else pad_extra,
-            temp.shape[1]-temp.shape[0]+ pad_extra  if (temp.shape[1]-temp.shape[0] > 0) else pad_extra ))
-            temp = resize(temp, (im_size,im_size),anti_aliasing=False)
-            features.append((feature_index, temp, original_dims, height, arr[1]))
+        for pos_or_neg, arr in enumerate([arr_pos, arr_neg]):
+            for feature_index in np.unique(arr[0])[1:]:
+                indices=np.where(arr[0]==feature_index)
+                if ((max(indices[0])-min(indices[0]))<=min_length )|((max(indices[1])-min(indices[1]))<=min_width): continue 
+                if ((max(indices[0])-min(indices[0]))>=max_length )|((max(indices[1])-min(indices[1]))>=max_width): continue  
+                temp = convex_hull_image(arr[0]==feature_index)
+                temp = temp[np.min(indices[0]):np.max(indices[0]), np.min(indices[1]):np.max(indices[1])]
+
+                if (temp.shape[0]<=min_length )|(temp.shape[1]<=min_width): continue
+                if (temp.shape[0]>=max_length )|(temp.shape[1]>=max_width): continue
+
+                original_dims, height= temp.shape, np.min(indices[0])
+                temp = resize(temp, (im_size,im_size),anti_aliasing=False,preserve_range=True)
+                features.append((feature_index, temp, original_dims, height, arr[1],pos_or_neg, qthresh, [chromosome, np.min(indices[0]),np.max(indices[0]), np.min(indices[1]),np.max(indices[1])]))
         return features
-    
+
     def make_maps(self,chromosome, diagonal_off=4):
         all_maps = self.make_maps_base(chromosome, diagonal_off=diagonal_off)
         all_maps_grouped = self.make_maps_grouped(all_maps)
