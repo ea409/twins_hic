@@ -9,7 +9,7 @@ Python 3.6 or higher. Linux/OS. Separate installation of hic-straw is recommende
 ### Installation 
 clone repository and then inside the repository run the following command: 
 
-``` python setup.py install ```
+``` pip install . ```
 
 ### Testing 
 
