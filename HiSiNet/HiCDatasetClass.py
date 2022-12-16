@@ -7,6 +7,7 @@ from scipy.sparse import csr_matrix
 from frozendict import frozendict
 from HiSiNet.reference_dictionaries import reference_genomes
 from skimage.transform import resize
+from skimage.morphology import convex_hull_image
 
 class HiCDataset(Dataset):
     """Hi-C dataset."""
