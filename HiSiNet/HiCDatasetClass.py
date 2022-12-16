@@ -59,7 +59,7 @@ class HiCDataset(Dataset):
 
 
 class HiCDatasetDec(HiCDataset):
-    import straw
+    import hicstraw as straw
     """Hi-C dataset loader"""
     def __init__(self, *args, **kwargs):
         super(HiCDatasetDec, self).__init__(*args, **kwargs)
