@@ -54,19 +54,3 @@ Models can be tested using the siamese_test.py script. Here a threshold is calcu
 The distances between regions in their own right are of interest, regions with known differences in terms of enhancer activation etc are those which also have the highest euclidean distance - therefore using the euclidean distances or even looking at only regions with very high euclidean distances can help focus your research. 
 
 ## Downstream
-
-### Integrated Gradient maps
-Integrated gradient maps and other types of comprehension maps can be obtained using the captum package. First, a toy model must be created from the forward_one weights in the Siamese network model. 
-
-```
-import torch.nn as nn
-import copy
-class ToyModel(nn.Module):
-    def __init__(self, model):
-        super().__init__()
-        self.model = copy.deepcopy(model.forward_one)
-    def forward(self, input):
-        return self.model(input)
-
-```
-Then from the IntegratedGradients on the captum package we can obtain comprehension maps of the Hi-C region of choice taken against a baseline as demonstrated below. Note that in this way we can check our network is understanding important features because these maps should highlight TADs, contact domains, stripes, loops and other features associated with Hi-C data. If these maps highlight random noise then there is a potential the sequencing depth between samples is too inconsistent for this method. 
