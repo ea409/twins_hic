@@ -52,8 +52,6 @@ Models can be tested using the siamese_test.py script. Here a threshold is calcu
 
 The distances between regions in their own right are of interest, regions with known differences in terms of enhancer activation etc are those which also have the highest euclidean distance - therefore using the euclidean distances or even looking at only regions with very high euclidean distances can help focus your research. 
 
-## Feature Extraction 
-An additional script for the generation of feature extraction maps are available in the feature extraction folder. 
+## Downstream analysis
+Files demonstrating examples of downstream analysis can be found in the two jupyter labs notebooks. And an additional script for the generation of feature extraction maps are available in the feature extraction folder. 
 
-## Downstream
-Files demonstrating examples of downstream analysis can be found in the two jupyter labs notebooks.
