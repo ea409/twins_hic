@@ -4,7 +4,7 @@ This module contains an efficient data laoder and training structure for Hi-C da
 ## Installation and Testing
 
 ### Requirements 
-Python 3.6 or higher. Linux/OS. Separate installation of hic-straw is recommended. 
+Python 3.6 or higher. Linux/OS. Separate installation of hic-straw is recommended (v0.0.8). 
 
 ### Installation 
 clone repository and then inside the repository run the following command: 
