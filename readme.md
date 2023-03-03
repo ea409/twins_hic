@@ -17,7 +17,7 @@ This should be a quick command, if dependencies need to be installed then it may
 Load Hi-C data from a `.hic` using the HiCDatasetDec type. Saving imediately after initialising is recommended since the initialisation is time and memory intensive.
 
 ```
-from HiCDataset import HiCDatasetDec
+from HiSiNet.HiCDatasetClass import HiCDatasetDec
 replicate_id = 'R1' #replicate identifier can be anything  
 class_id = 0 #class identifier must be int 
 data = HiCDatasetDec(['input.hic', replicate_id , 'KR', 'BP', class_id],10000,880000)
@@ -30,10 +30,10 @@ data_condition1 = HiCDatasetDec.load('input.mlhic')
 data_condition2 = HiCDatasetDec.load('input2.mlhic')
 data_condition3 = HiCDatasetDec.load('input3.mlhic')
 
-from HiCDataset import GroupedHiCDataset
+from HiSiNet.HiCDatasetClass import GroupedHiCDataset
 grouped_dataset = GroupedHiCDataset([data_condition1,data_condition2, data_condition3], reference = 'mm9')
 
-from HiCDataset import SiameseHiCDataset
+from HiSiNet.HiCDatasetClass import SiameseHiCDataset
 siamese1 = SiameseHiCDataset([data_condition1, data_condition2]) 
 siamese2 = SiameseHiCDataset([data_condition1, data_condition3])
 grouped = GroupedHiCDataset( [siamese1, siamese2], reference = 'mm9')
