@@ -105,13 +105,20 @@ optional arguments:
 The model_name should be a model from HiSiNet.models such as SLeNet.The json_file file should be a json specifying the location of the train, validation and test files such as: 
 
 ```
-{"dataset1": {"reference": "hg19", "training": ["path/train_r1.mlhic", "path/train_r2.mlhic"], "validation": ["path/validation_r1.mlhic", "path/validation_r2.mlhic"], "test": ["path/test_r1.mlhic", "path/tests_r2.mlhic"]}}
+{"dataset1": {"reference": "hg19",
+              "training": ["path/train_r1.mlhic", "path/train_r2.mlhic"], 
+              "validation": ["path/validation_r1.mlhic", "path/validation_r2.mlhic"], 
+              "test": ["path/test_r1.mlhic", "path/tests_r2.mlhic"]}}
+              
 ```
 Each dictionary should contain another dictionary with a reference genome name, a list containing the training .mlhic files, a list containing the validation .mlhic files and a list containing the test .mlhic files.
 
 In our paper we added a fully connected NN which used the difference between the two embedding vectors as the input and trianed the CNN using cross entropy loss. The bias argument is a scaling factor for the contrastive loss and the cross entropy loss, in the following figure the scaling factor is labelled as  λ. Our analysis showed that setting a very low scaling factor i.e. increasing the weight of the cross entropy loss leads to more discrete probaability of classification at the end of the fully connected NN layer, but at the expense of meaningful embedding distances. This term may depend on the use case, in our paper we use λ=2. 
 
-![](output_example/loss_types_bias.png)
+
+| Effect of varying bias parameter λ| 
+| ------ | 
+| ![](output_example/loss_types_bias.png) |
 
 
 ## Run Test Models
@@ -125,5 +132,6 @@ Models can be tested using the siamese_test.py script. Here a threshold is calcu
 The distances between regions in their own right are of interest, regions with known differences in terms of enhancer activation etc are those which also have the highest euclidean distance - therefore using the euclidean distances or even looking at only regions with very high euclidean distances can help focus your research. 
 
 ## Downstream analysis
-Files demonstrating examples of downstream analysis can be found in the two jupyter labs notebooks. One of which produces returns the distances obtained by the trained Siamese network, this is the main output of the paper and should take a few mins to run on the test data (chromosome 2 only) and up to 10 mins on all the data but this is highly dependent on computer processing speed.  And an additional script for the generation of feature extraction maps are available in the feature extraction folder. 
+Files demonstrating examples of downstream analysis can be found in the jupyter labs notebooks. One of which produces returns the distances obtained by the trained Siamese network, this is the main output of the paper and should take a few mins to run on the test data (chromosome 2 only) and up to 10 mins on all the data but this is highly dependent on computer processing speed.  And an additional script for the generation of feature extraction maps are available in the feature extraction folder. 
+Finally, a notebook desmsonstrating calculating the embeddings and performing dimension reduction and finding the most similar pattern with a given genome block. These in addtion to the documentation present in this readme should cover the key use cases. 
 
